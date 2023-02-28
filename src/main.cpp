@@ -23,10 +23,12 @@ MotorControl Motors = MotorControl();
 // instantiate beacon sensing class with digital pin 2 as input
 BeaconSensing Beacon = BeaconSensing(IR_PIN_IN, (float)45.0);
 
+// buffering for printing to console.
 unsigned long int current_millis = millis();
 unsigned long int timer_start = millis();
-unsigned int buffer = 500;
+unsigned int buffer = 200;
 
+// timer interrupt functions for IR beacon sensing
 void incrementCounter(){
   Beacon.incrementCounter();
 }
@@ -35,16 +37,17 @@ void interruptHandler(){
   Beacon.Update();
 }
 
+// setup
 void setup() {
   Serial.begin(9600);
   while(!Serial);
 
-  // attachInterrupt(digitalPinToInterrupt(Beacon.pin), incrementCounter, FALLING);
+  attachInterrupt(digitalPinToInterrupt(Beacon.pin), incrementCounter, FALLING);
 
   // the beacon frequency estimate will update automatically at the 
   // specified frequency (estimate_freq).
-  // ITimer2.init();
-  // ITimer2.attachInterrupt(Beacon.estimate_freq, interruptHandler);
+  ITimer2.init();
+  ITimer2.attachInterrupt(Beacon.estimate_freq, interruptHandler);
 
 }
 
@@ -57,8 +60,6 @@ void loop() {
 
   // check if we can see the high or low freq beacons
   // optional argument to switch type of estimate: AVERAGE/INSTANT
-  // bool freq_3333 = Beacon.checkForFrequency(HIGH_FREQ);
-  // bool freq_909  = Beacon.checkForFrequency(LOW_FREQ);
 
   Lines.Update();  // call this as frequently as you want to update the averages
 
@@ -75,10 +76,21 @@ void loop() {
     // sensors are over the specified color.
     if (Lines.checkSensor(RIGHT, RED)){
       Serial.println("TURN RIGHT!");
-  }
-  }
+    }
 
+    // use Beacon.checkForFrequency to return a boolean if we find a 
+    // HIGH_FREQ/LOW_FREQ signal
+    if (Beacon.checkForFrequency(HIGH_FREQ)) {
+      Serial.println("FOUND 3333HZ.");
+    }
+
+    if (Beacon.checkForFrequency(LOW_FREQ)) {
+      Serial.println("FOUND 909HZ.");
+    }
+  }
 }
+
+
 
 
 
