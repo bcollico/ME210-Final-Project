@@ -4,6 +4,12 @@
 #include <BeaconSensing.hpp>
 
 #define USE_TIMER_2 true
+
+// pin definitions
+#define L_DPIN        5
+#define L_EPIN        2
+#define R_DPIN        10
+#define R_EPIN        6
 #define IR_PIN_IN 2
 
 #include <TimerInterrupt.h>
@@ -18,7 +24,7 @@ typedef enum {
 LineFollowing Lines = LineFollowing();
 
 // instantiate motor control class
-MotorControl Motors = MotorControl();
+MotorControl Motors = MotorControl(L_EPIN, R_EPIN, L_DPIN, R_DPIN);
 
 // instantiate beacon sensing class with digital pin 2 as input
 BeaconSensing Beacon = BeaconSensing(IR_PIN_IN, (float)45.0);

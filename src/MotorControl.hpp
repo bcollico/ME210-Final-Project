@@ -3,12 +3,44 @@
 
 #include "Arduino.h"
 
+typedef enum {
+    IDLE, FWD_FAST, FWD_SLOW, BWD_FAST, BWD_SLOW
+} MotorState_t;
+
+typedef enum {
+  MOTOR_LEFT, MOTOR_RIGHT
+} Motor_t;
+
+typedef enum {
+  CCW, CW
+} WheelDirection_t;
+
 class MotorControl {
     public:
-      MotorControl();
+      MotorControl(int l_epin, int r_epin, int l_dpin, int r_dpin);
+
+      int L_epin;
+      int R_epin;
+      int L_dpin;
+      int R_dpin;
+      WheelDirection_t L_dir;
+      WheelDirection_t R_dir;
+      int L_speed;
+      int R_speed;
+      MotorState_t L_motorState;
+      MotorState_t R_motorState;
+
+
+      void idle();
+      void forward();
+      void backward();
+      void slowRight();
+      void slowLeft();
+      void fastRight();
+      void fastLeft();
 
     private:
-      int a; // dummy var
+      void motorRotate(Motor_t motor, WheelDirection_t direction, int16_t speed);
 };
 
 #endif
