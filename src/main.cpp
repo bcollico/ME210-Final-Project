@@ -7,7 +7,7 @@
 
 // pin definitions
 #define L_DPIN        5
-#define L_EPIN        2
+#define L_EPIN        3
 #define R_DPIN        10
 #define R_EPIN        6
 #define IR_PIN_IN 2
@@ -15,10 +15,12 @@
 #include <TimerInterrupt.h>
 #include <ISR_Timer.h>
 
-// these are placeholders. need to actually specify the states
-typedef enum {
-  FAST_L, SLOW_L, FAST_R, SLOW_R, FWD
-} States_t;
+int counter = 0;
+
+/*---------------Module Function Prototypes-----------------*/
+void checkGlobalEvents(void);
+unsigned char TestForKey(void);
+void RespToKey(void);
 
 // instantiate line following class
 LineFollowing Lines = LineFollowing();
@@ -54,7 +56,8 @@ void setup() {
   // specified frequency (estimate_freq).
   ITimer2.init();
   ITimer2.attachInterrupt(Beacon.estimate_freq, interruptHandler);
-
+  
+  Motors.idle();
 }
 
 void loop() {
@@ -96,7 +99,36 @@ void loop() {
   }
 }
 
+void checkGlobalEvents(void) {
+  if (TestForKey()) RespToKey();
+}
 
+uint8_t TestForKey(void) {
+  uint8_t KeyEventOccurred;
+  KeyEventOccurred = Serial.available();
+  return KeyEventOccurred;
+}
+
+void RespToKey(void) {
+  counter++;
+  if (counter == 1) {
+    Motors.forward();
+  } else if (counter == 2) {
+    Motors.backward();
+  } else if (counter == 3) {
+    Motors.fastLeft();
+  } else if (counter == 4) {
+    Motors.fastRight();
+  } else if (counter == 5) {
+    Motors.slowLeft();
+  } else if (counter == 6) {
+    Motors.slowRight();
+  } else {
+    counter = 0;
+    Motors.idle();
+  }
+  Serial.println(Serial.read());
+}
 
 
 
