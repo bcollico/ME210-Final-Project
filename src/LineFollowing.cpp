@@ -29,6 +29,7 @@ LineFollowing::LineFollowing() {
 }
 
 void LineFollowing::Update(){
+  // Serial.println("Update Function.");
   // add a new sensor value to each sensor array
   updateValues();
 
@@ -47,6 +48,7 @@ void LineFollowing::updateValues(){
   for (int i = 0; i < n_sensors; i++){
     prev_vals[i] = vals[i][newest_idx]; // store values to be removed
     vals[i][newest_idx] = analogRead(pins[i]); // write in new values
+    // Serial.println(vals[i][newest_idx]);
   }
 }
 
@@ -64,12 +66,12 @@ void LineFollowing::calculateAverages(){
 void LineFollowing::updateAverages() {
   // calculate averages by updating only using the oldest/newest values
   for (int i = 0; i < n_sensors; i++) {
-    avgs[i] = avgs[i] + inv_avg_window*(vals[i][newest_idx] - prev_vals[i]);
+    avgs[i] += inv_avg_window*(vals[i][newest_idx] - prev_vals[i]);
   }
 
 }
 
-bool LineFollowing::checkSensor(int i_sensor, Colors_t color=RED){
+bool LineFollowing::checkSensor(Sensors_t i_sensor, Colors_t color=RED){
   // check if the specified sensor is over the specified color
   if (i_sensor > n_sensors-1) {
     Serial.print("Index number "); Serial.print(i_sensor);
@@ -103,7 +105,5 @@ bool LineFollowing::checkAnySensor(Colors_t color=BLACK){
   }
   return false;
 }
-
-
 
 

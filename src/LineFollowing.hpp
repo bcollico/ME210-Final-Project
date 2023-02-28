@@ -16,12 +16,16 @@ class LineFollowing {
         LineFollowing();
 
         void Update();
-        bool checkSensor(int i_sensor, Colors_t color);
+        bool checkSensor(Sensors_t i_sensor, Colors_t color);
         bool checkAnySensor(Colors_t);
 
         int n_sensors;
         int avg_window;
         uint8_t pins[4];
+
+        float avgs[4];
+        int vals[4][20];
+        int newest_idx; // index of newest value
 
     private:
 
@@ -29,11 +33,7 @@ class LineFollowing {
         void updateAverages();
         void updateValues();
 
-        int newest_idx; // index of newest value
-
-        unsigned long int vals[4][20];
-        float avgs[4];
-        unsigned long int prev_vals[4];
+        int prev_vals[4];
 
         int wht_tape;
         int red_tape;
