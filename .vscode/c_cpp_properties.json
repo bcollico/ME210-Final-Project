@@ -10,6 +10,7 @@
             "includePath": [
                 "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/include",
                 "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/src",
+                "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/.pio/libdeps/uno/TimerInterrupt/src",
                 "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/cores/arduino",
                 "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/variants/standard",
                 "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
@@ -24,6 +25,7 @@
                 "path": [
                     "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/include",
                     "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/src",
+                    "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/.pio/libdeps/uno/TimerInterrupt/src",
                     "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/cores/arduino",
                     "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/variants/standard",
                     "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
