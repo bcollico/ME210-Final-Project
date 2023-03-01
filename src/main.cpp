@@ -6,11 +6,11 @@
 #define USE_TIMER_2 true
 
 // pin definitions
-#define L_DPIN        5
-#define L_EPIN        3
-#define R_DPIN        10
-#define R_EPIN        6
-#define IR_PIN_IN 2
+#define L_DPIN        7
+#define L_EPIN        9
+#define R_DPIN        12
+#define R_EPIN        10
+#define IR_PIN_IN     2
 
 #include <TimerInterrupt.h>
 #include <ISR_Timer.h>
@@ -50,7 +50,7 @@ void setup() {
   Serial.begin(9600);
   while(!Serial);
 
-  attachInterrupt(digitalPinToInterrupt(Beacon.pin), incrementCounter, FALLING);
+ attachInterrupt(digitalPinToInterrupt(Beacon.pin), incrementCounter, FALLING);
 
   // the beacon frequency estimate will update automatically at the 
   // specified frequency (estimate_freq).
@@ -72,31 +72,32 @@ void loop() {
 
   Lines.Update();  // call this as frequently as you want to update the averages
 
-  current_millis = millis();
-  if ((current_millis - timer_start) >= buffer) {
-    timer_start = millis();
-    // use Line.checkAnySensor and a color (RED/BLACK/WHITE) to check if
-    // any sensor is detecting the specified color.
-    if (Lines.checkAnySensor(BLACK)) {
-      Serial.println("BLACK TAPE!");
-    }
+  // current_millis = millis();
+  // if ((current_millis - timer_start) >= buffer) {
+  //   timer_start = millis();
+  //   // use Line.checkAnySensor and a color (RED/BLACK/WHITE) to check if
+  //   // any sensor is detecting the specified color.
+  //   if (Lines.checkAnySensor(BLACK)) {
+  //     Serial.println("BLACK TAPE!");
+  //   }
 
-    // use Line.checkSensor to check if the LEFT/LEFT_MID/RIGHT_MID/RIGHT
-    // sensors are over the specified color.
-    if (Lines.checkSensor(RIGHT, RED)){
-      Serial.println("TURN RIGHT!");
-    }
+  //   // use Line.checkSensor to check if the LEFT/LEFT_MID/RIGHT_MID/RIGHT
+  //   // sensors are over the specified color.
+  //   if (Lines.checkSensor(RIGHT, RED)){
+  //     Serial.println("TURN RIGHT!");
+  //   }
 
-    // use Beacon.checkForFrequency to return a boolean if we find a 
-    // HIGH_FREQ/LOW_FREQ signal
-    if (Beacon.checkForFrequency(HIGH_FREQ)) {
-      Serial.println("FOUND 3333HZ.");
-    }
+  //   // use Beacon.checkForFrequency to return a boolean if we find a 
+  //   // HIGH_FREQ/LOW_FREQ signal
+  //   if (Beacon.checkForFrequency(HIGH_FREQ)) {
+  //     Serial.println("FOUND 3333HZ.");
+  //   }
 
-    if (Beacon.checkForFrequency(LOW_FREQ)) {
-      Serial.println("FOUND 909HZ.");
-    }
-  }
+  //   if (Beacon.checkForFrequency(LOW_FREQ)) {
+  //     Serial.println("FOUND 909HZ.");
+  //   }
+  // }
+  checkGlobalEvents();
 }
 
 void checkGlobalEvents(void) {
@@ -129,7 +130,3 @@ void RespToKey(void) {
   }
   Serial.println(Serial.read());
 }
-
-
-
-

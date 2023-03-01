@@ -11,9 +11,14 @@ typedef enum {
   MOTOR_LEFT, MOTOR_RIGHT
 } Motor_t;
 
-// defines for direction
-#define CCW -1
-#define CW   1
+typedef enum {
+  CCW, CW
+} WheelDirection_t;
+
+// defines for motor speeds
+#define FAST  80
+#define SLOW  50
+#define OFF   0
 
 class MotorControl {
     public:
@@ -40,7 +45,7 @@ class MotorControl {
       void fastLeft();
 
     private:
-      void motorRotate(Motor_t motor, int direction, int16_t speed);
+      void motorRotate(Motor_t motor, WheelDirection_t direction, int16_t speed);
 };
 
 #endif
