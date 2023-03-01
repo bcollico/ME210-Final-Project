@@ -23,8 +23,10 @@ MotorControl::MotorControl(int l_epin, int r_epin, int l_dpin, int r_dpin) {
 void MotorControl::motorRotate(Motor_t motor, WheelDirection_t direction, int16_t speed) {
   if (speed < 0) speed = 0;
   if (speed > 100) speed = 100;
-  analogWrite(motor == MOTOR_LEFT ? L_epin : R_epin, map(speed,0,100,0,255));
-  digitalWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, direction);
+  digitalWrite(motor == MOTOR_LEFT ? L_epin : R_epin, HIGH);
+  analogWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, map((direction == CCW ? -1 * speed : speed),-100,100,0,255));
+  // analogWrite(motor == MOTOR_LEFT ? L_epin : R_epin, map(speed,0,100,0,255));
+  // digitalWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, direction);
 }
 
 void MotorControl::idle() {

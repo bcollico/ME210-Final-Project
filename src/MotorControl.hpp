@@ -17,7 +17,7 @@ typedef enum {
 
 // defines for motor speeds
 #define FAST  20
-#define SLOW  5
+#define SLOW  20
 #define OFF   0
 
 class MotorControl {

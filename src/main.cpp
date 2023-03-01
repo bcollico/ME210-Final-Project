@@ -7,10 +7,10 @@
 #define USE_TIMER_2 true
 
 // pin definitions
-#define L_DPIN        7
-#define L_EPIN        9
-#define R_DPIN        12
-#define R_EPIN        10
+#define L_DPIN        9
+#define L_EPIN        7
+#define R_DPIN        10
+#define R_EPIN        12
 #define IR_PIN_IN     2
 #define CP_PIN        6
 #define FREQ_SWITCH_PIN 4
@@ -24,7 +24,7 @@ int counter = 0;
 // motor timer
 unsigned int motor_timer_start;
 unsigned int motor_timer_duration;
-unsigned int rotation_time[2] = {500, 1000}; // [ms]
+unsigned int rotation_time[2] = {100, 200}; // [ms]
 
 /* ---------- STATES ----------*/
 typedef enum {
@@ -87,17 +87,18 @@ void setup() {
   ITimer2.init();
   ITimer2.attachInterrupt(Beacon.estimate_freq, interruptHandler);
   
-  Motors.idle();
+  // Motors.idle();
 
   CrowdPleaser.start(CP_DURATION);
 
   pinMode(FREQ_SWITCH_PIN, INPUT);
 
   if (digitalRead(FREQ_SWITCH_PIN)) {
-    our_freq = HIGH_FREQ;
+    our_freq = LOW_FREQ; // TODO: switch to HIGH_FREQ
   } else {
     our_freq = LOW_FREQ;
   }
+  // Motors.slowLeft();
 }
 
 void loop() {
@@ -113,7 +114,12 @@ void loop() {
 
       // transition to beacon finding
       Motors.slowLeft();
-      STATE = FINDING_BEACON;
+      // if (Beacon.checkForFrequency(our_freq)) {
+      //   Serial.println("It happened.");
+      // }
+      Serial.println(Beacon.avg_freq);
+      // STATE = FINDING_BEACON;
+      break;
 
     case FINDING_BEACON:
       // 1. start slow rotation
@@ -122,10 +128,13 @@ void loop() {
 
       if (Beacon.checkForFrequency(our_freq)){
         // transition to INIT_ORIENTATION
+        Motors.idle();
+        delay(3000);
         Serial.println("FOUND BEACON.");
         motor_timer_start = millis();
         motor_timer_duration = rotation_time[1]; // 180-deg turn        
         STATE = TURNING;
+        Motors.slowLeft();
       }
 
     case AT_STUDIO:
