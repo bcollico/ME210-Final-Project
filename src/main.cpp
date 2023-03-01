@@ -13,11 +13,32 @@
 #define R_EPIN        10
 #define IR_PIN_IN     2
 #define CP_PIN        6
+#define FREQ_SWITCH_PIN 4
 
 #include <TimerInterrupt.h>
 #include <ISR_Timer.h>
 
+// counter for respToKey
 int counter = 0;
+
+// motor timer
+unsigned int motor_timer_start;
+unsigned int motor_timer_duration;
+unsigned int rotation_time[2] = {500, 1000}; // [ms]
+
+/* ---------- STATES ----------*/
+typedef enum {
+  BOT_IDLE, FINDING_BEACON, AT_STUDIO, DRIVE_FWD, TURNING,
+  PRESS_DISP, INTO_STUDIO, GAMEOVER
+} States_t;
+
+typedef enum {STUDIO_BLK, STUDIO_RED, PRESS_BLK, PRESS_RED_1, 
+PRESS_RED_2, LINE_FOLLOWING}
+FwdStates_t;
+
+
+FwdStates_t FWD_STATE = STUDIO_RED;
+States_t STATE = BOT_IDLE;
 
 /*---------------Module Function Prototypes-----------------*/
 void checkGlobalEvents(void);
@@ -50,6 +71,8 @@ void interruptHandler(){
   Beacon.Update();
 }
 
+Freqs_t our_freq;
+
 // setup
 void setup() {
   Serial.begin(9600);
@@ -57,7 +80,7 @@ void setup() {
 
   int initTime = millis();
 
-  attachInterrupt(digitalPinToInterrupt(Beacon.pin), incrementCounter, FALLING);
+ attachInterrupt(digitalPinToInterrupt(Beacon.pin), incrementCounter, FALLING);
 
   // the beacon frequency estimate will update automatically at the 
   // specified frequency (estimate_freq).
@@ -67,45 +90,154 @@ void setup() {
   Motors.idle();
 
   CrowdPleaser.start(CP_DURATION);
+
+  pinMode(FREQ_SWITCH_PIN, INPUT);
+
+  if (digitalRead(FREQ_SWITCH_PIN)) {
+    our_freq = HIGH_FREQ;
+  } else {
+    our_freq = LOW_FREQ;
+  }
 }
 
 void loop() {
-  // no need to call Beacon.Update() as the Timer Interrup service
-  // handles this at a rate of approximately 45 hz
 
-  // you can update the frequency of the beacon estimate by calling
-  // Beacon.updateEstimateFreq((float)10) e.g. update at 10hz
-
-  // check if we can see the high or low freq beacons
-  // optional argument to switch type of estimate: AVERAGE/INSTANT
 
   Lines.Update();  // call this as frequently as you want to update the averages
 
+  // IDLE, FINDING_BEACON, INIT_ORIENTATION, AT_STUDIO, DRIVE_FWD, TURNING,
+  // PRESS_DISP, INTO_STUDIO, GAMEOVER
+
+  switch (STATE) {
+    case BOT_IDLE:
+
+      // transition to beacon finding
+      Motors.slowLeft();
+      STATE = FINDING_BEACON;
+
+    case FINDING_BEACON:
+      // 1. start slow rotation
+      // 2. check for signal via frequency estimate
+      // 3. stop and switch states when found
+
+      if (Beacon.checkForFrequency(our_freq)){
+        // transition to INIT_ORIENTATION
+        Serial.println("FOUND BEACON.");
+        motor_timer_start = millis();
+        motor_timer_duration = rotation_time[1]; // 180-deg turn        
+        STATE = TURNING;
+      }
+
+    case AT_STUDIO:
+      break;
+    case DRIVE_FWD:
+
+      // STUDIO_BLK, STUDIO_RED, PRESS_BLK, PRESS_RED_1, PRESS_RED_2
+      switch (FWD_STATE) {
+
+        case STUDIO_RED:
+          if (Lines.checkAnySensor(RED)) {
+            Serial.println("FOUND RED TAPE.");
+            Motors.idle();
+            FWD_STATE = LINE_FOLLOWING;
+          }
+
+        case LINE_FOLLOWING:
+
+          // catches for the outer sensors
+          if (Lines.checkAnySensor(BLACK)) {
+            Serial.println("REACHED PRESS LINE.");
+            Motors.fastRight();
+            motor_timer_duration = rotation_time[0];
+            motor_timer_start = millis();
+            FWD_STATE = PRESS_RED_1;
+            STATE = TURNING;
+
+          } else if (Lines.checkSensor(LEFT, RED)) {
+            Motors.fastLeft();
+            motor_timer_duration = rotation_time[0]/2;
+            motor_timer_start = millis();
+            STATE = TURNING;
+
+          } else if (Lines.checkSensor(RIGHT, RED)) {
+            Motors.fastRight();
+            motor_timer_duration = rotation_time[0]/2;
+            motor_timer_start = millis();
+            STATE = TURNING;
+
+          } else if (Lines.checkSensor(LEFT_MID, RED)) {
+            Motors.slowLeft();
+            motor_timer_duration = rotation_time[0]/2;
+            motor_timer_start = millis();
+            STATE = TURNING;
+
+          } else if (Lines.checkSensor(RIGHT_MID, RED)) {
+            Motors.slowRight();
+            motor_timer_duration = rotation_time[0]/2;
+            motor_timer_start = millis();
+            STATE = TURNING;
+
+          }
+
+        case STUDIO_BLK:
+          break;
+
+        case PRESS_BLK: 
+          break;
+        case PRESS_RED_1:
+          Serial.println("STOP.");
+          Motors.idle();
+
+          // if (Lines.checkAnySensor(RED)){
+          //   if (BAD_PRESS) {
+          //   Motors.idle();
+          //   Serial.println("DROP PRESS.");
+
+          //   motor_timer_start = millis();
+          //   motor_timer_duration = 3000;
+          //   STATE = PRESS_DISP;
+          //   } else {
+          //       Motors.idle();
+          //   Serial.println("DROP PRESS.");
+
+          //   motor_timer_start = millis();
+          //   motor_timer_duration = 3000;
+          //   FWD_STATE = PRESS_RED_2;
+          //   }
+          // }
+        
+        case PRESS_RED_2:
+
+          if (Lines.checkAnySensor(RED)){
+            Motors.idle();
+            Serial.println("DROP PRESS.");
+
+            motor_timer_start = millis();
+            motor_timer_duration = 3000;
+            FWD_STATE = PRESS_RED_2;
+          }
+      }
+
+    case TURNING:
+
+      if ((current_millis - motor_timer_start) >= motor_timer_duration){
+        STATE = DRIVE_FWD;
+        Motors.forward();
+      }
+
+
+    case INTO_STUDIO:
+      break;
+    case PRESS_DISP:
+      break;
+    case GAMEOVER:
+      break;
+  }
+
   current_millis = millis();
-  // if ((current_millis - timer_start) >= buffer) {
-  //   timer_start = millis();
-  //   // use Line.checkAnySensor and a color (RED/BLACK/WHITE) to check if
-  //   // any sensor is detecting the specified color.
-  //   if (Lines.checkAnySensor(BLACK)) {
-  //     Serial.println("BLACK TAPE!");
-  //   }
-
-  //   // use Line.checkSensor to check if the LEFT/LEFT_MID/RIGHT_MID/RIGHT
-  //   // sensors are over the specified color.
-  //   if (Lines.checkSensor(RIGHT, RED)){
-  //     Serial.println("TURN RIGHT!");
-  //   }
-
-  //   // use Beacon.checkForFrequency to return a boolean if we find a 
-  //   // HIGH_FREQ/LOW_FREQ signal
-  //   if (Beacon.checkForFrequency(HIGH_FREQ)) {
-  //     Serial.println("FOUND 3333HZ.");
-  //   }
-
-  //   if (Beacon.checkForFrequency(LOW_FREQ)) {
-  //     Serial.println("FOUND 909HZ.");
-  //   }
-  // }
+  if ((current_millis - timer_start) >= buffer) {
+    timer_start = millis();
+  }
   checkGlobalEvents();
 }
 

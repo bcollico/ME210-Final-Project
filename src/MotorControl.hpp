@@ -16,8 +16,8 @@ typedef enum {
 } WheelDirection_t;
 
 // defines for motor speeds
-#define FAST  80
-#define SLOW  50
+#define FAST  20
+#define SLOW  5
 #define OFF   0
 
 class MotorControl {
