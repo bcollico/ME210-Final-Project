@@ -2,6 +2,7 @@
 #include <LineFollowing.hpp>
 #include <MotorControl.hpp>
 #include <BeaconSensing.hpp>
+#include <CrowdPleasing.hpp>
 
 #define USE_TIMER_2 true
 
@@ -11,6 +12,7 @@
 #define R_DPIN        12
 #define R_EPIN        10
 #define IR_PIN_IN     2
+#define CP_PIN        6
 
 #include <TimerInterrupt.h>
 #include <ISR_Timer.h>
@@ -31,6 +33,9 @@ MotorControl Motors = MotorControl(L_EPIN, R_EPIN, L_DPIN, R_DPIN);
 // instantiate beacon sensing class with digital pin 2 as input
 BeaconSensing Beacon = BeaconSensing(IR_PIN_IN, (float)45.0);
 
+// instantiate crowd pleaser class
+CrowdPleasing CrowdPleaser = CrowdPleasing(CP_PIN);
+
 // buffering for printing to console.
 unsigned long int current_millis = millis();
 unsigned long int timer_start = millis();
@@ -50,7 +55,9 @@ void setup() {
   Serial.begin(9600);
   while(!Serial);
 
- attachInterrupt(digitalPinToInterrupt(Beacon.pin), incrementCounter, FALLING);
+  int initTime = millis();
+
+  attachInterrupt(digitalPinToInterrupt(Beacon.pin), incrementCounter, FALLING);
 
   // the beacon frequency estimate will update automatically at the 
   // specified frequency (estimate_freq).
@@ -58,6 +65,8 @@ void setup() {
   ITimer2.attachInterrupt(Beacon.estimate_freq, interruptHandler);
   
   Motors.idle();
+
+  CrowdPleaser.start(CP_DURATION);
 }
 
 void loop() {
@@ -72,7 +81,7 @@ void loop() {
 
   Lines.Update();  // call this as frequently as you want to update the averages
 
-  // current_millis = millis();
+  current_millis = millis();
   // if ((current_millis - timer_start) >= buffer) {
   //   timer_start = millis();
   //   // use Line.checkAnySensor and a color (RED/BLACK/WHITE) to check if
@@ -102,6 +111,9 @@ void loop() {
 
 void checkGlobalEvents(void) {
   if (TestForKey()) RespToKey();
+  if (CrowdPleaser.isRunning()) {
+    CrowdPleaser.monitorShutdown(current_millis);
+  }
 }
 
 uint8_t TestForKey(void) {
@@ -128,5 +140,6 @@ void RespToKey(void) {
     counter = 0;
     Motors.idle();
   }
+  CrowdPleaser.start(CP_DURATION);
   Serial.println(Serial.read());
 }
