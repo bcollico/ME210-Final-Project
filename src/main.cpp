@@ -3,6 +3,7 @@
 #include <MotorControl.hpp>
 #include <BeaconSensing.hpp>
 #include <CrowdPleasing.hpp>
+#include <PressDispensing.hpp>
 
 #define USE_TIMER_2 true
 
@@ -13,6 +14,7 @@
 #define R_EPIN        12
 #define IR_PIN_IN     2
 #define CP_PIN        6
+#define PD_PIN        8
 #define FREQ_SWITCH_PIN 4
 
 #include <TimerInterrupt.h>
@@ -57,6 +59,9 @@ BeaconSensing Beacon = BeaconSensing(IR_PIN_IN, (float)45.0);
 // instantiate crowd pleaser class
 CrowdPleasing CrowdPleaser = CrowdPleasing(CP_PIN);
 
+// instantiate press dispenser class
+PressDispensing PressDispenser = PressDispensing(PD_PIN);
+
 // buffering for printing to console.
 unsigned long int current_millis = millis();
 unsigned long int timer_start = millis();
@@ -80,7 +85,7 @@ void setup() {
 
   int initTime = millis();
 
- attachInterrupt(digitalPinToInterrupt(Beacon.pin), incrementCounter, FALLING);
+  attachInterrupt(digitalPinToInterrupt(Beacon.pin), incrementCounter, FALLING);
 
   // the beacon frequency estimate will update automatically at the 
   // specified frequency (estimate_freq).
@@ -238,7 +243,7 @@ void loop() {
     case INTO_STUDIO:
       break;
     case PRESS_DISP:
-      break;
+      PressDispenser.start(PD_DURATION);
     case GAMEOVER:
       break;
   }
@@ -254,6 +259,9 @@ void checkGlobalEvents(void) {
   if (TestForKey()) RespToKey();
   if (CrowdPleaser.isRunning()) {
     CrowdPleaser.monitorShutdown(current_millis);
+  }
+  if (PressDispenser.isRunning()) {
+    PressDispenser.monitorShutdown(current_millis);
   }
 }
 
@@ -282,5 +290,6 @@ void RespToKey(void) {
     Motors.idle();
   }
   CrowdPleaser.start(CP_DURATION);
+  PressDispenser.start(PD_DURATION);
   Serial.println(Serial.read());
 }
