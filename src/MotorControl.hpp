@@ -4,10 +4,6 @@
 #include "Arduino.h"
 
 typedef enum {
-    IDLE, FWD_FAST, FWD_SLOW, BWD_FAST, BWD_SLOW
-} MotorState_t;
-
-typedef enum {
   MOTOR_LEFT, MOTOR_RIGHT
 } Motor_t;
 
@@ -19,6 +15,8 @@ typedef enum {
 #define FAST  20
 #define SLOW  20
 #define OFF   0
+#define HARDFWD_DIFF  10 // %
+#define SOFTFWD_DIFF  5  // %
 
 class MotorControl {
     public:
@@ -32,8 +30,6 @@ class MotorControl {
       int R_dir;
       int L_speed;
       int R_speed;
-      MotorState_t L_motorState;
-      MotorState_t R_motorState;
 
 
       void idle();
@@ -43,9 +39,16 @@ class MotorControl {
       void slowLeft();
       void fastRight();
       void fastLeft();
+      void hardFwdRight();
+      void hardFwdLeft();
+      void softFwdRight();
+      void softFwdLeft();
+
+      // General movement public function
+      void moveBot(WheelDirection_t l_dir, WheelDirection_t r_dir, int l_speed, int r_speed);
 
     private:
-      void motorRotate(Motor_t motor, WheelDirection_t direction, int16_t speed);
+      void motorRotate(Motor_t motor, WheelDirection_t direction, int speed);
 };
 
 #endif

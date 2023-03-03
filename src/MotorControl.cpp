@@ -7,26 +7,15 @@ MotorControl::MotorControl(int l_epin, int r_epin, int l_dpin, int r_dpin) {
     L_dpin = l_dpin; // left direction pin
     R_dpin = r_dpin; // right direction pin
 
-    L_dir = CCW;
-    R_dir = CCW;
+    L_dir = CW;
+    R_dir = CW;
     L_speed = OFF;
     R_speed = OFF;
-    L_motorState = IDLE;
-    R_motorState = IDLE;
 
     pinMode(l_epin,OUTPUT);
     pinMode(r_epin,OUTPUT);
     pinMode(l_dpin,OUTPUT);
     pinMode(r_dpin,OUTPUT);
-}
-
-void MotorControl::motorRotate(Motor_t motor, WheelDirection_t direction, int16_t speed) {
-  if (speed < 0) speed = 0;
-  if (speed > 100) speed = 100;
-  digitalWrite(motor == MOTOR_LEFT ? L_epin : R_epin, HIGH);
-  analogWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, map((direction == CCW ? -1 * speed : speed),-100,100,0,255));
-  // analogWrite(motor == MOTOR_LEFT ? L_epin : R_epin, map(speed,0,100,0,255));
-  // digitalWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, direction);
 }
 
 void MotorControl::idle() {
@@ -36,8 +25,6 @@ void MotorControl::idle() {
   R_dir = CCW;
   L_speed = OFF;
   R_speed = OFF;
-  L_motorState = IDLE;
-  R_motorState = IDLE;
 }
 
 void MotorControl::forward() {
@@ -47,8 +34,6 @@ void MotorControl::forward() {
   R_dir = CCW;
   L_speed = FAST;
   R_speed = FAST;
-  L_motorState = FWD_FAST;
-  R_motorState = FWD_FAST;
 }
 
 void MotorControl::backward() {
@@ -58,8 +43,6 @@ void MotorControl::backward() {
   R_dir = CW;
   L_speed = FAST;
   R_speed = FAST;
-  L_motorState = BWD_FAST;
-  R_motorState = BWD_FAST;
 }
 
 void MotorControl::slowRight() {
@@ -69,8 +52,6 @@ void MotorControl::slowRight() {
   R_dir = CW;
   L_speed = SLOW;
   R_speed = SLOW;
-  L_motorState = FWD_SLOW;
-  R_motorState = BWD_SLOW;
 }
 
 void MotorControl::slowLeft() {
@@ -80,8 +61,6 @@ void MotorControl::slowLeft() {
   R_dir = CCW;
   L_speed = SLOW;
   R_speed = SLOW;
-  L_motorState = BWD_SLOW;
-  R_motorState = FWD_SLOW;
 }
 
 void MotorControl::fastRight() {
@@ -91,8 +70,6 @@ void MotorControl::fastRight() {
   R_dir = CW;
   L_speed = FAST;
   R_speed = FAST;
-  L_motorState = FWD_FAST;
-  R_motorState = BWD_FAST;
 }
 
 void MotorControl::fastLeft() {
@@ -102,6 +79,58 @@ void MotorControl::fastLeft() {
   R_dir = CCW;
   L_speed = FAST;
   R_speed = FAST;
-  L_motorState = BWD_FAST;
-  R_motorState = FWD_FAST;
+}
+
+void MotorControl::hardFwdRight() {
+  motorRotate(MOTOR_LEFT, CCW, FAST);
+  motorRotate(MOTOR_RIGHT, CCW, FAST - HARDFWD_DIFF);
+  L_dir = CCW;
+  R_dir = CCW;
+  L_speed = FAST;
+  R_speed = FAST - HARDFWD_DIFF;
+}
+
+void MotorControl::hardFwdLeft() {
+  motorRotate(MOTOR_LEFT, CCW, FAST - HARDFWD_DIFF);
+  motorRotate(MOTOR_RIGHT, CCW, FAST);
+  L_dir = CCW;
+  R_dir = CCW;
+  L_speed = FAST - HARDFWD_DIFF;
+  R_speed = FAST;
+}
+
+void MotorControl::softFwdRight() {
+  motorRotate(MOTOR_LEFT, CCW, FAST);
+  motorRotate(MOTOR_RIGHT, CCW, FAST - SOFTFWD_DIFF);
+  L_dir = CCW;
+  R_dir = CCW;
+  L_speed = FAST;
+  R_speed = FAST - SOFTFWD_DIFF;
+}
+
+void MotorControl::softFwdLeft() {
+  motorRotate(MOTOR_LEFT, CCW, FAST - SOFTFWD_DIFF);
+  motorRotate(MOTOR_RIGHT, CCW, FAST);
+  L_dir = CCW;
+  R_dir = CCW;
+  L_speed = FAST - SOFTFWD_DIFF;
+  R_speed = FAST;
+}
+
+void MotorControl::moveBot(WheelDirection_t l_dir, WheelDirection_t r_dir, int l_speed, int r_speed) {
+  L_dir = l_dir;
+  R_dir = r_dir;
+  L_speed = l_speed;
+  R_speed = r_speed;
+  motorRotate(MOTOR_LEFT, l_dir, l_speed);
+  motorRotate(MOTOR_RIGHT, r_dir, r_speed);
+}
+
+void MotorControl::motorRotate(Motor_t motor, WheelDirection_t direction, int speed) {
+  if (speed < 0) speed = 0;
+  if (speed > 100) speed = 100;
+  digitalWrite(motor == MOTOR_LEFT ? L_epin : R_epin, HIGH);
+  analogWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, map((direction == CW ? -1 * speed : speed),-100,100,0,255));
+  // analogWrite(motor == MOTOR_LEFT ? L_epin : R_epin, map(speed,0,100,0,255));
+  // digitalWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, direction);
 }

@@ -39,8 +39,8 @@ PRESS_RED_2, LINE_FOLLOWING}
 FwdStates_t;
 
 
-FwdStates_t FWD_STATE = STUDIO_RED;
-States_t STATE = BOT_IDLE;
+FwdStates_t FWD_STATE = LINE_FOLLOWING;
+States_t STATE = DRIVE_FWD;
 
 /*---------------Module Function Prototypes-----------------*/
 void checkGlobalEvents(void);
@@ -91,8 +91,6 @@ void setup() {
   // specified frequency (estimate_freq).
   ITimer2.init();
   ITimer2.attachInterrupt(Beacon.estimate_freq, interruptHandler);
-  
-  // Motors.idle();
 
   CrowdPleaser.start(CP_DURATION);
 
@@ -103,12 +101,13 @@ void setup() {
   } else {
     our_freq = LOW_FREQ;
   }
-  // Motors.slowLeft();
+
+  Motors.forward(); // for line following testing only
 }
 
 void loop() {
 
-
+  current_millis = millis();
   Lines.Update();  // call this as frequently as you want to update the averages
 
   // IDLE, FINDING_BEACON, INIT_ORIENTATION, AT_STUDIO, DRIVE_FWD, TURNING,
@@ -152,46 +151,49 @@ void loop() {
         case STUDIO_RED:
           if (Lines.checkAnySensor(RED)) {
             Serial.println("FOUND RED TAPE.");
-            Motors.idle();
             FWD_STATE = LINE_FOLLOWING;
           }
 
         case LINE_FOLLOWING:
 
           // catches for the outer sensors
-          if (Lines.checkAnySensor(BLACK)) {
-            Serial.println("REACHED PRESS LINE.");
-            Motors.fastRight();
-            motor_timer_duration = rotation_time[0];
-            motor_timer_start = millis();
-            FWD_STATE = PRESS_RED_1;
-            STATE = TURNING;
+          // if (Lines.checkAnySensor(BLACK)) {
+          //   Serial.println("REACHED PRESS LINE.");
+          //   Motors.idle(); // added for testing only
+          //   delay(10000); // added for testing only
+          //   Motors.fastRight();
+          //   motor_timer_duration = rotation_time[0];
+          //   motor_timer_start = millis();
+          //   FWD_STATE = PRESS_RED_1;
+          //   STATE = TURNING;
 
-          } else if (Lines.checkSensor(LEFT, RED)) {
-            Motors.fastLeft();
-            motor_timer_duration = rotation_time[0]/2;
-            motor_timer_start = millis();
-            STATE = TURNING;
+          Motors.idle();
 
-          } else if (Lines.checkSensor(RIGHT, RED)) {
-            Motors.fastRight();
-            motor_timer_duration = rotation_time[0]/2;
-            motor_timer_start = millis();
-            STATE = TURNING;
+          // if ((current_millis-timer_start) >= 200){
+          timer_start = millis();
+          Serial.print(Lines.vals[0][Lines.newest_idx]);
+          Serial.print(", ");
+          Serial.print(Lines.vals[1][Lines.newest_idx]);
+          Serial.print(", ");
+          Serial.print(Lines.vals[2][Lines.newest_idx]);
+          Serial.print(", ");
+          Serial.println(Lines.vals[3][Lines.newest_idx]);
+          // }
 
-          } else if (Lines.checkSensor(LEFT_MID, RED)) {
-            Motors.slowLeft();
-            motor_timer_duration = rotation_time[0]/2;
-            motor_timer_start = millis();
-            STATE = TURNING;
 
-          } else if (Lines.checkSensor(RIGHT_MID, RED)) {
-            Motors.slowRight();
-            motor_timer_duration = rotation_time[0]/2;
-            motor_timer_start = millis();
-            STATE = TURNING;
+          // if (Lines.checkSensor(LEFT, RED)) {
+          //   Motors.hardFwdLeft();
 
-          }
+          // } else if (Lines.checkSensor(RIGHT, RED)) {
+          //   Motors.hardFwdRight();
+
+          // } else if (Lines.checkSensor(LEFT_MID, RED) && !Lines.checkSensor(RIGHT_MID, RED)) {
+          //   Motors.softFwdLeft();
+
+          // } else if (Lines.checkSensor(RIGHT_MID, RED) && !Lines.checkSensor(LEFT_MID, RED)) {
+          //   Motors.softFwdRight();
+
+          // }
 
         case STUDIO_BLK:
           break;
