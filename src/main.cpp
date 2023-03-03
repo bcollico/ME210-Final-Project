@@ -26,7 +26,7 @@ int counter = 0;
 // motor timer
 unsigned int motor_timer_start;
 unsigned int motor_timer_duration;
-unsigned int rotation_time[2] = {100, 200}; // [ms]
+unsigned int rotation_time[2] = {1125, 2100}; // [ms]
 
 /* ---------- STATES ----------*/
 typedef enum {
@@ -39,8 +39,8 @@ PRESS_RED_2, LINE_FOLLOWING}
 FwdStates_t;
 
 
-FwdStates_t FWD_STATE = LINE_FOLLOWING;
-States_t STATE = DRIVE_FWD;
+FwdStates_t FWD_STATE = STUDIO_BLK;
+States_t STATE = BOT_IDLE;
 
 /*---------------Module Function Prototypes-----------------*/
 void checkGlobalEvents(void);
@@ -102,7 +102,13 @@ void setup() {
     our_freq = LOW_FREQ;
   }
 
-  Motors.forward(); // for line following testing only
+  // Lines.calibrate_sensors();
+
+  // STATE = FINDING_BEACON;
+
+  // delay(10000);
+
+  // Motors.forward(); // for line following testing only
 }
 
 void loop() {
@@ -117,28 +123,28 @@ void loop() {
     case BOT_IDLE:
 
       // transition to beacon finding
-      Motors.slowLeft();
+      Motors.slowRight();
       // if (Beacon.checkForFrequency(our_freq)) {
       //   Serial.println("It happened.");
       // }
-      Serial.println(Beacon.avg_freq);
-      // STATE = FINDING_BEACON;
+      // Serial.println(Beacon.avg_freq);
+      STATE = FINDING_BEACON;
       break;
 
     case FINDING_BEACON:
       // 1. start slow rotation
       // 2. check for signal via frequency estimate
       // 3. stop and switch states when found
-
-      if (Beacon.checkForFrequency(our_freq)){
+      // Serial.println(Beacon.freq_vals[Beacon.newest_idx]);
+      if (Beacon.checkForFrequency(our_freq, INSTANT)){
         // transition to INIT_ORIENTATION
         Motors.idle();
         delay(3000);
-        Serial.println("FOUND BEACON.");
+        // Serial.println("FOUND BEACON.");
         motor_timer_start = millis();
         motor_timer_duration = rotation_time[1]; // 180-deg turn        
         STATE = TURNING;
-        Motors.slowLeft();
+        Motors.slowRight();
       }
 
     case AT_STUDIO:
@@ -158,8 +164,10 @@ void loop() {
 
           // catches for the outer sensors
           // if (Lines.checkAnySensor(BLACK)) {
-          //   Serial.println("REACHED PRESS LINE.");
+          //   // Serial.println("REACHED PRESS LINE.");
           //   Motors.idle(); // added for testing only
+          //   delay(10000);
+          // }
           //   delay(10000); // added for testing only
           //   Motors.fastRight();
           //   motor_timer_duration = rotation_time[0];
@@ -167,35 +175,67 @@ void loop() {
           //   FWD_STATE = PRESS_RED_1;
           //   STATE = TURNING;
 
-          Motors.idle();
+          // Motors.idle();
 
           // if ((current_millis-timer_start) >= 200){
-          timer_start = millis();
-          Serial.print(Lines.vals[0][Lines.newest_idx]);
-          Serial.print(", ");
-          Serial.print(Lines.vals[1][Lines.newest_idx]);
-          Serial.print(", ");
-          Serial.print(Lines.vals[2][Lines.newest_idx]);
-          Serial.print(", ");
-          Serial.println(Lines.vals[3][Lines.newest_idx]);
+          // timer_start = millis();
+          // Serial.print(Lines.meas_vals[0][Lines.newest_idx]);
+          // Serial.print(", ");
+          // Serial.print(Lines.meas_vals[1][Lines.newest_idx]);
+          // Serial.print(", ");
+          // Serial.print(Lines.meas_vals[2][Lines.newest_idx]);
+          // Serial.print(", ");
+          // Serial.println(Lines.meas_vals[3][Lines.newest_idx]);
           // }
 
+          // Serial.print(Lines.checkSensor(LEFT,RED));
+          // Serial.print(", ");
+          // Serial.print(Lines.checkSensor(LEFT_MID,RED));
+          // Serial.print(", ");
+          // Serial.print(Lines.checkSensor(RIGHT_MID,RED));
+          // Serial.print(", ");
+          // Serial.println(Lines.checkSensor(RIGHT,RED));
 
-          // if (Lines.checkSensor(LEFT, RED)) {
-          //   Motors.hardFwdLeft();
+          if (Lines.checkAnySensor(BLACK)) {
+            Serial.println("REACHED PRESS LINE.");
+            Motors.idle(); // added for testing only
+            delay(10000);
+            break;
+          } else if (Lines.checkSensor(LEFT, RED)) {
+            Motors.hardFwdLeft();
+            Serial.println("HARDLEFT");
+            break;
+          } else if (Lines.checkSensor(RIGHT, RED)) {
+            Motors.hardFwdRight();
+            Serial.println("HARDRIGHT");
+            break;
+          } else if (Lines.checkSensor(LEFT_MID, RED) && !Lines.checkSensor(RIGHT_MID, RED)) {
+            Motors.softFwdLeft();
+            Serial.println("SOFTLEFT");
+            break;
+          } else if (Lines.checkSensor(RIGHT_MID, RED) && !Lines.checkSensor(LEFT_MID, RED)) {
+            Motors.softFwdRight();
+            Serial.println("SOFTRIGHT");
+            break;
+          }
 
-          // } else if (Lines.checkSensor(RIGHT, RED)) {
-          //   Motors.hardFwdRight();
+          break;
 
-          // } else if (Lines.checkSensor(LEFT_MID, RED) && !Lines.checkSensor(RIGHT_MID, RED)) {
-          //   Motors.softFwdLeft();
+          // Motors.forward();
 
-          // } else if (Lines.checkSensor(RIGHT_MID, RED) && !Lines.checkSensor(LEFT_MID, RED)) {
-          //   Motors.softFwdRight();
-
-          // }
+          break;
 
         case STUDIO_BLK:
+          if (Lines.checkAnySensor(BLACK)) {
+            Motors.forward(); // added for testing only
+            FWD_STATE = LINE_FOLLOWING;
+            timer_start = millis();
+            current_millis = millis();
+            while ((current_millis-timer_start < 1000)){
+              current_millis = millis();
+            }
+            break;
+          }
           break;
 
         case PRESS_BLK: 

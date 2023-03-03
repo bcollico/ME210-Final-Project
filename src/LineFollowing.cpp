@@ -18,13 +18,17 @@ LineFollowing::LineFollowing() {
     avgs[i] = 1000; // initialize for updating averages
     pinMode(pins[i], INPUT);
     for (int j = 0; j < avg_window; j++){
-      vals[i][j] = 1000; // initialize to white tape values
+      meas_vals[i][j] = 1000; // initialize to white tape values
     }
   }
 
-  wht_tape = 400;
-  red_tape = 250;
-  blk_tape = 100;
+  red_tape = 500;
+  blk_tape = 200;
+
+  meas_bias[0] = 54;
+  meas_bias[1] = -45;
+  meas_bias[2] = -101;
+  meas_bias[3] = -61;
 
 }
 
@@ -46,8 +50,8 @@ void LineFollowing::updateValues(){
   }
 
   for (int i = 0; i < n_sensors; i++){
-    prev_vals[i] = vals[i][newest_idx]; // store values to be removed
-    vals[i][newest_idx] = analogRead(pins[i]); // write in new values
+    prev_vals[i] = meas_vals[i][newest_idx]; // store values to be removed
+    meas_vals[i][newest_idx] = analogRead(pins[i]) - meas_bias[i]; // write in new values and subtract bias
     // Serial.println(vals[i][newest_idx]);
   }
 }
@@ -57,38 +61,60 @@ void LineFollowing::calculateAverages(){
   for (int i = 0; i < n_sensors; i++) {
     avgs[i] = 0;
     for (int j = 0; j < avg_window; j++) {
-      avgs[i] += vals[i][j];
+      avgs[i] += meas_vals[i][j];
     }
-    avgs[i] = avgs[i] / avg_window;
+    avgs[i] = (avgs[i] / avg_window);
   }
 }
 
 void LineFollowing::updateAverages() {
   // calculate averages by updating only using the oldest/newest values
   for (int i = 0; i < n_sensors; i++) {
-    avgs[i] += inv_avg_window*(vals[i][newest_idx] - prev_vals[i]);
+    avgs[i] += inv_avg_window*(meas_vals[i][newest_idx] - prev_vals[i]);
   }
 
 }
 
-bool LineFollowing::checkSensor(Sensors_t i_sensor, Colors_t color=RED){
+bool LineFollowing::checkSensor(Sensors_t i, Colors_t color){
   // check if the specified sensor is over the specified color
-  if (i_sensor > n_sensors-1) {
-    Serial.print("Index number "); Serial.print(i_sensor);
+  if (i > n_sensors-1) {
+    Serial.print("Index number "); Serial.print(i);
     Serial.print(" is outside of the index range 0-"); Serial.print(n_sensors-1);
     return false;
   }
 
+  // Serial.println("logical output");
+  // Serial.println((meas_vals[i][newest_idx] <= red_tape) && (meas_vals[i][newest_idx] >= blk_tape) == true);
+
+  // Serial.println("Color");
+  // Serial.println(color);
+
+
   switch (color) {
     case RED:
-      return avgs[i_sensor] >= red_tape && avgs[i_sensor] < wht_tape;
+      if (((meas_vals[i][newest_idx] <= red_tape) && (meas_vals[i][newest_idx] >= blk_tape)) == true) {
+        // Serial.println("RED.");
+        return true;
+        }
+      break;
     case WHITE: 
-      return avgs[i_sensor] >= wht_tape;
+      if ((meas_vals[i][newest_idx] > red_tape) == true) {
+        // Serial.println("WHITE");
+        return true;
+      }
+      break;
     case BLACK:
-      return avgs[i_sensor] <= blk_tape;
-
-    return false;
+      if ((meas_vals[i][newest_idx] < blk_tape) == true) {
+        // Serial.println("BLACK.");
+        return true;
+        }
+      break;
   }
+
+
+  // Serial.println("END.");
+  return false;
+  
 }
 
 bool LineFollowing::checkAnySensor(Colors_t color=BLACK){
@@ -96,14 +122,42 @@ bool LineFollowing::checkAnySensor(Colors_t color=BLACK){
   for (int i = 0; i < n_sensors; i++) {
     switch (color) {
       case RED:
-        if (avgs[i] >= red_tape && avgs[i] < wht_tape) {return true;};
+        if ((meas_vals[i][newest_idx] <= red_tape) && (meas_vals[i][newest_idx] >= blk_tape)) {return true;};
+        break;
       case WHITE: 
-        if (avgs[i] >= wht_tape) {return true;};
+        if (meas_vals[i][newest_idx] > red_tape) {return true;};
+        break;
       case BLACK:
-        if (avgs[i] <= blk_tape) {return true;};
+        if (meas_vals[i][newest_idx] < blk_tape) {return true;};
+        break;
     }
   }
   return false;
 }
 
+void LineFollowing::calibrate_sensors(){
 
+  int current_value;
+
+  Serial.println("PLACE OVER RED TAPE");
+  delay(5000);
+  Serial.println("-------------START-------------");
+  for (int i = 0; i < n_samples; i++) {
+    for (int j = 0; j < n_sensors; j++) {
+      current_value = analogRead(pins[j]);
+      if (current_value > meas_bias[j] ) {
+        meas_bias[j] = current_value;
+      }
+    }
+    delay(100);
+  }
+  Serial.println("-------------STOP-------------");
+
+  Serial.println("Red Tape Biases");
+  for (int j = 0; j < n_sensors; j++){
+    meas_bias[j] -= (red_tape+10);
+    Serial.print(meas_bias[j]);
+    Serial.print(", ");
+  }
+  Serial.println("");
+}
