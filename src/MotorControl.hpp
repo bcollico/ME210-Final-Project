@@ -48,7 +48,9 @@ class MotorControl {
       void hardFwdRight();
       void hardFwdLeft();
       void softFwdRight();
+      void softFwdRight(int diff);
       void softFwdLeft();
+      void softFwdLeft(int diff);
 
       // General movement public function
       void moveBot(WheelDirection_t l_dir, WheelDirection_t r_dir, int l_speed, int r_speed);

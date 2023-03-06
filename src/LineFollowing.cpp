@@ -22,15 +22,15 @@ LineFollowing::LineFollowing() {
     }
   }
 
-  lower_red[0] = 229;
-  lower_red[1] = 149;
-  lower_red[2] = 130;
-  lower_red[3] = 136;
+  lower_red[0] = 150; //266; //229;
+  lower_red[1] = 100; //162; //149;
+  lower_red[2] = 100; // 118; //130;
+  lower_red[3] = 100; //117; //136;
 
-  upper_red[0] = 679;
-  upper_red[1] = 460;
-  upper_red[2] = 394;
-  upper_red[3] = 415;
+  upper_red[0] = 550;//776; //679;
+  upper_red[1] = 300;//483; //460;
+  upper_red[2] = 300;//369; //394;
+  upper_red[3] = 300;//371; //415;
 
   blk_high[0] = -1000;
   blk_high[1] = -1000;
@@ -51,7 +51,7 @@ void LineFollowing::Update(){
   updateValues();
 
   // update averages
-  updateAverages();
+  // updateAverages();
 }
 
 void LineFollowing::updateValues(){
@@ -120,7 +120,8 @@ bool LineFollowing::checkSensor(Sensors_t i, Colors_t color){
       if ((meas_vals[i][newest_idx] < lower_red[i]) == true) {
         // Serial.println("BLACK.");
         return true;
-        }
+        break;
+      }
       break;
   }
 

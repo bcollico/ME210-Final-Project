@@ -37,12 +37,12 @@ void MotorControl::forward() {
 }
 
 void MotorControl::backward() {
-  motorRotate(MOTOR_LEFT, CW, FAST);
-  motorRotate(MOTOR_RIGHT, CW, FAST);
+  motorRotate(MOTOR_LEFT, CW, SLOW);
+  motorRotate(MOTOR_RIGHT, CW, SLOW);
   L_dir = CW;
   R_dir = CW;
-  L_speed = FAST;
-  R_speed = FAST;
+  L_speed = SLOW;
+  R_speed = SLOW;
 }
 
 void MotorControl::slowRight() {
@@ -108,12 +108,30 @@ void MotorControl::softFwdRight() {
   R_speed = FAST - SOFTFWD_DIFF;
 }
 
+void MotorControl::softFwdRight(int diff) {
+  motorRotate(MOTOR_LEFT, CCW, FAST);
+  motorRotate(MOTOR_RIGHT, CCW, FAST - diff);
+  L_dir = CCW;
+  R_dir = CCW;
+  L_speed = FAST;
+  R_speed = FAST - diff;
+}
+
 void MotorControl::softFwdLeft() {
   motorRotate(MOTOR_LEFT, CCW, FAST - SOFTFWD_DIFF);
   motorRotate(MOTOR_RIGHT, CCW, FAST);
   L_dir = CCW;
   R_dir = CCW;
   L_speed = FAST - SOFTFWD_DIFF;
+  R_speed = FAST;
+}
+
+void MotorControl::softFwdLeft(int diff) {
+  motorRotate(MOTOR_LEFT, CCW, FAST - diff);
+  motorRotate(MOTOR_RIGHT, CCW, FAST);
+  L_dir = CCW;
+  R_dir = CCW;
+  L_speed = FAST - diff;
   R_speed = FAST;
 }
 
