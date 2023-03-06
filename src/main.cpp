@@ -27,6 +27,7 @@ int counter = 0;
 unsigned int motor_timer_start;
 unsigned int motor_timer_duration;
 unsigned int rotation_time[2] = {1125, 2100}; // [ms]
+int lastRed = -1;
 
 /* ---------- STATES ----------*/
 typedef enum {
@@ -39,8 +40,8 @@ PRESS_RED_2, LINE_FOLLOWING}
 FwdStates_t;
 
 
-FwdStates_t FWD_STATE = STUDIO_BLK;
-States_t STATE = BOT_IDLE;
+FwdStates_t FWD_STATE = LINE_FOLLOWING;
+States_t STATE = DRIVE_FWD;
 
 /*---------------Module Function Prototypes-----------------*/
 void checkGlobalEvents(void);
@@ -97,9 +98,9 @@ void setup() {
   pinMode(FREQ_SWITCH_PIN, INPUT);
 
   if (digitalRead(FREQ_SWITCH_PIN)) {
-    our_freq = LOW_FREQ; // TODO: switch to HIGH_FREQ
+    our_freq = HIGH_FREQ;
   } else {
-    our_freq = LOW_FREQ;
+    our_freq = HIGH_FREQ; // TODO: switch to LOW_FREQ
   }
 
   // Lines.calibrate_sensors();
@@ -204,19 +205,37 @@ void loop() {
           } else if (Lines.checkSensor(LEFT, RED)) {
             Motors.hardFwdLeft();
             Serial.println("HARDLEFT");
+            lastRed = LEFT;
             break;
           } else if (Lines.checkSensor(RIGHT, RED)) {
             Motors.hardFwdRight();
             Serial.println("HARDRIGHT");
+            lastRed = RIGHT;
             break;
           } else if (Lines.checkSensor(LEFT_MID, RED) && !Lines.checkSensor(RIGHT_MID, RED)) {
             Motors.softFwdLeft();
             Serial.println("SOFTLEFT");
+            lastRed = LEFT_MID;
             break;
           } else if (Lines.checkSensor(RIGHT_MID, RED) && !Lines.checkSensor(LEFT_MID, RED)) {
             Motors.softFwdRight();
             Serial.println("SOFTRIGHT");
+            lastRed = RIGHT_MID;
             break;
+          } else {
+            if (lastRed == LEFT) {
+              Motors.hardFwdLeft();
+              Serial.println("HARDLEFT");
+            } else if (lastRed == RIGHT) {
+              Motors.hardFwdRight();
+              Serial.println("HARDRIGHT");
+            } else if (lastRed == LEFT_MID) {
+              Motors.softFwdLeft();
+              Serial.println("SOFTLEFT");
+            } else if (lastRed == RIGHT_MID) {
+              Motors.softFwdRight();
+              Serial.println("SOFTRIGHT");
+            }
           }
 
           break;
@@ -294,6 +313,9 @@ void loop() {
   if ((current_millis - timer_start) >= buffer) {
     timer_start = millis();
   }
+  // Serial.print(Motors.L_speed);
+  // Serial.print(", ");
+  // Serial.println(Motors.R_speed);
   checkGlobalEvents();
 }
 
@@ -305,6 +327,9 @@ void checkGlobalEvents(void) {
   if (PressDispenser.isRunning()) {
     PressDispenser.monitorShutdown(current_millis);
   }
+  // Serial.print(Motors.L_speed);
+  // Serial.print(", ");
+  // Serial.println(Motors.R_speed);
 }
 
 uint8_t TestForKey(void) {

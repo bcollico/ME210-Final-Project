@@ -22,14 +22,27 @@ LineFollowing::LineFollowing() {
     }
   }
 
-  red_tape = 500;
-  blk_tape = 200;
+  lower_red[0] = 229;
+  lower_red[1] = 149;
+  lower_red[2] = 130;
+  lower_red[3] = 136;
 
-  meas_bias[0] = 54;
-  meas_bias[1] = -45;
-  meas_bias[2] = -101;
-  meas_bias[3] = -61;
+  upper_red[0] = 679;
+  upper_red[1] = 460;
+  upper_red[2] = 394;
+  upper_red[3] = 415;
 
+  blk_high[0] = -1000;
+  blk_high[1] = -1000;
+  blk_high[2] = -1000;
+  blk_high[3] = -1000;
+
+  white_low[0] = 2000;
+  white_low[1] = 2000;
+  white_low[2] = 2000;
+  white_low[3] = 2000;
+
+  red_margin = 0.2; // 20% margin between black and white before reaching red
 }
 
 void LineFollowing::Update(){
@@ -51,7 +64,7 @@ void LineFollowing::updateValues(){
 
   for (int i = 0; i < n_sensors; i++){
     prev_vals[i] = meas_vals[i][newest_idx]; // store values to be removed
-    meas_vals[i][newest_idx] = analogRead(pins[i]) - meas_bias[i]; // write in new values and subtract bias
+    meas_vals[i][newest_idx] = analogRead(pins[i]); // write in new values
     // Serial.println(vals[i][newest_idx]);
   }
 }
@@ -92,19 +105,19 @@ bool LineFollowing::checkSensor(Sensors_t i, Colors_t color){
 
   switch (color) {
     case RED:
-      if (((meas_vals[i][newest_idx] <= red_tape) && (meas_vals[i][newest_idx] >= blk_tape)) == true) {
+      if (((meas_vals[i][newest_idx] <= upper_red[i]) && (meas_vals[i][newest_idx] >= lower_red[i])) == true) {
         // Serial.println("RED.");
         return true;
         }
       break;
     case WHITE: 
-      if ((meas_vals[i][newest_idx] > red_tape) == true) {
+      if ((meas_vals[i][newest_idx] > upper_red[i]) == true) {
         // Serial.println("WHITE");
         return true;
       }
       break;
     case BLACK:
-      if ((meas_vals[i][newest_idx] < blk_tape) == true) {
+      if ((meas_vals[i][newest_idx] < lower_red[i]) == true) {
         // Serial.println("BLACK.");
         return true;
         }
@@ -122,13 +135,13 @@ bool LineFollowing::checkAnySensor(Colors_t color=BLACK){
   for (int i = 0; i < n_sensors; i++) {
     switch (color) {
       case RED:
-        if ((meas_vals[i][newest_idx] <= red_tape) && (meas_vals[i][newest_idx] >= blk_tape)) {return true;};
+        if ((meas_vals[i][newest_idx] <= upper_red[i]) && (meas_vals[i][newest_idx] >= lower_red[i])) {return true;};
         break;
       case WHITE: 
-        if (meas_vals[i][newest_idx] > red_tape) {return true;};
+        if (meas_vals[i][newest_idx] > upper_red[i]) {return true;};
         break;
       case BLACK:
-        if (meas_vals[i][newest_idx] < blk_tape) {return true;};
+        if (meas_vals[i][newest_idx] < lower_red[i]) {return true;};
         break;
     }
   }
@@ -139,25 +152,55 @@ void LineFollowing::calibrate_sensors(){
 
   int current_value;
 
-  Serial.println("PLACE OVER RED TAPE");
+  Serial.println("PLACE OVER BLACK TAPE");
   delay(5000);
   Serial.println("-------------START-------------");
   for (int i = 0; i < n_samples; i++) {
     for (int j = 0; j < n_sensors; j++) {
       current_value = analogRead(pins[j]);
-      if (current_value > meas_bias[j] ) {
-        meas_bias[j] = current_value;
+      // Serial.println(analogRead(pins[j]));
+      if (current_value > blk_high[j] ) {
+        blk_high[j] = current_value;
+      }
+    }
+    delay(100);
+  }
+  Serial.println("-------------STOP-------------");
+  delay(1000);
+  Serial.println("PLACE OVER WHITE AREA");
+  delay(5000);
+  Serial.println("-------------START-------------");
+  for (int i = 0; i < n_samples; i++) {
+    for (int j = 0; j < n_sensors; j++) {
+      current_value = analogRead(pins[j]);
+      // Serial.println(analogRead(pins[j]));
+      if (current_value < white_low[j] ) {
+        white_low[j] = current_value;
       }
     }
     delay(100);
   }
   Serial.println("-------------STOP-------------");
 
-  Serial.println("Red Tape Biases");
+  lower_red[0] = blk_high[0] + red_margin * (white_low[0] - blk_high[0]);
+  lower_red[1] = blk_high[1] + red_margin * (white_low[1] - blk_high[1]);
+  lower_red[2] = blk_high[2] + red_margin * (white_low[2] - blk_high[2]);
+  lower_red[3] = blk_high[3] + red_margin * (white_low[3] - blk_high[3]);
+
+  upper_red[0] = white_low[0] - red_margin * (white_low[0] - blk_high[0]);
+  upper_red[1] = white_low[1] - red_margin * (white_low[1] - blk_high[1]);
+  upper_red[2] = white_low[2] - red_margin * (white_low[2] - blk_high[2]);
+  upper_red[3] = white_low[3] - red_margin * (white_low[3] - blk_high[3]);
+
+  Serial.println("Red Tape Thresholds");
   for (int j = 0; j < n_sensors; j++){
-    meas_bias[j] -= (red_tape+10);
-    Serial.print(meas_bias[j]);
+    Serial.print(lower_red[j]);
     Serial.print(", ");
+    Serial.println(upper_red[j]);
+    // Serial.print(blk_high[0]);
+    // Serial.print(", ");
+    // Serial.println(white_low[j]);
+    // Serial.println("");
   }
   Serial.println("");
 }

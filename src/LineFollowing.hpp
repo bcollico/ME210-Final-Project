@@ -26,8 +26,13 @@ class LineFollowing {
 
         float avgs[4];
         int meas_vals[4][20];
-        int meas_bias[4];
         int newest_idx; // index of newest value
+        int upper_red[4];
+        int lower_red[4];
+        int blk_high[4];
+        int white_low[4];
+
+        float red_margin;
 
     private:
 
@@ -38,9 +43,6 @@ class LineFollowing {
         int prev_vals[4];
 
         float inv_avg_window;
-
-        int blk_tape;
-        int red_tape;
 
         int n_samples = 100;
 
