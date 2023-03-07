@@ -46,7 +46,9 @@ class MotorControl {
       void fastRight();
       void fastLeft();
       void hardFwdRight();
+      void hardFwdRight(int diff);
       void hardFwdLeft();
+      void hardFwdLeft(int diff);
       void softFwdRight();
       void softFwdRight(int diff);
       void softFwdLeft();

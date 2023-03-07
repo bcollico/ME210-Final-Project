@@ -6,7 +6,7 @@ PressDispensing::PressDispensing(int pd_pin) {
     pinMode(pin, OUTPUT);
 }
 
-void PressDispensing::start(int dur) {
+void PressDispensing::start(float dur) {
     digitalWrite(pin, HIGH);
     startTime = millis();
     running = true;
@@ -17,7 +17,7 @@ bool PressDispensing::isRunning() {
     return running;
 }
 
-void PressDispensing::monitorShutdown(int currentTime) {
+void PressDispensing::monitorShutdown(float currentTime) {
     if ((currentTime - startTime) >= (duration * 1000)) {
         digitalWrite(pin, LOW);
         running = false;

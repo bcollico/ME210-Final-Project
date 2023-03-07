@@ -90,12 +90,30 @@ void MotorControl::hardFwdRight() {
   R_speed = FAST - HARDFWD_DIFF;
 }
 
+void MotorControl::hardFwdRight(int diff) {
+  motorRotate(MOTOR_LEFT, CCW, FAST);
+  motorRotate(MOTOR_RIGHT, CCW, FAST - diff);
+  L_dir = CCW;
+  R_dir = CCW;
+  L_speed = FAST;
+  R_speed = FAST - diff;
+}
+
 void MotorControl::hardFwdLeft() {
   motorRotate(MOTOR_LEFT, CCW, FAST - HARDFWD_DIFF);
   motorRotate(MOTOR_RIGHT, CCW, FAST);
   L_dir = CCW;
   R_dir = CCW;
   L_speed = FAST - HARDFWD_DIFF;
+  R_speed = FAST;
+}
+
+void MotorControl::hardFwdLeft(int diff) {
+  motorRotate(MOTOR_LEFT, CCW, FAST - diff);
+  motorRotate(MOTOR_RIGHT, CCW, FAST);
+  L_dir = CCW;
+  R_dir = CCW;
+  L_speed = FAST - diff;
   R_speed = FAST;
 }
 

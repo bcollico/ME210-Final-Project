@@ -26,7 +26,7 @@ int counter = 0;
 // motor timer
 long int motor_timer_start;
 long int motor_timer_duration;
-int rotation_time[2] = {1100, 1600}; // [ms]
+int rotation_time[2] = {1100, 1800}; // [ms]
 int lastRed = -1;
 
 // game timer
@@ -34,6 +34,8 @@ long int game_start_time = millis();
 
 // buffer for moving from first press bucket
 long int black_tape_start;
+long int black_tape_timer;
+bool change_to_press = false;
 
 // store beacon frequency
 Freqs_t our_freq;
@@ -50,8 +52,8 @@ PRESS_RED_2, LINE_FOLLOWING_LEAVE, LINE_FOLLOWING_RETURN}
 FwdStates_t;
 
 
-FwdStates_t FWD_STATE = LINE_FOLLOWING_LEAVE;
-States_t STATE = DRIVE_FWD;
+FwdStates_t FWD_STATE = STUDIO_BLK;
+States_t STATE = BOT_IDLE;
 
 /*---------------Module Function Prototypes-----------------*/
 void checkGlobalEvents(void);
@@ -101,7 +103,7 @@ void setup() {
   ITimer2.init();
   ITimer2.attachInterrupt(Beacon.estimate_freq, interruptHandler);
 
-  // CrowdPleaser.start(CP_DURATION);
+  CrowdPleaser.start(CP_DURATION);
 
   pinMode(FREQ_SWITCH_PIN, INPUT);
 
@@ -112,6 +114,8 @@ void setup() {
   }
 
   // Lines.calibrate_sensors();
+
+  // delay(20000);
 
   // STATE = GAMEOVER;
 }
@@ -130,8 +134,6 @@ void loop() {
     case BOT_IDLE:
 
       // transition to beacon finding
-      ITimer2.init();
-      ITimer2.attachInterrupt(Beacon.estimate_freq, interruptHandler);
       Motors.slowRight();
       STATE = FINDING_BEACON;
       break;
@@ -182,10 +184,12 @@ void loop() {
 
           if (Lines.checkAnySensor(BLACK)) {
             // Serial.println("REACHED PRESS LINE.");
+            Motors.idle();
+            delay(250);
             Motors.backward();
             motor_timer_start = millis();
             // // TODO: Remove blocking code
-            while((current_millis - motor_timer_start) < 1000) {
+            while((current_millis - motor_timer_start) < 750) {
               current_millis = millis();
             }
             Motors.slowRight();
@@ -195,6 +199,7 @@ void loop() {
             // ----- CHANGE STATE ------ // 
             STATE = TURNING;
             FWD_STATE = PRESS_RED_1;
+            black_tape_timer = 1500+motor_timer_duration;
             // ------------------------- //
 
             lastRed = -1;
@@ -202,37 +207,37 @@ void loop() {
 
             break;
           } else if (Lines.checkSensor(LEFT, RED)) {
-            Motors.hardFwdLeft();
+            Motors.hardFwdLeft(25);
              //Serial.println("HARDLEFT");
             lastRed = LEFT;
             break;
           } else if (Lines.checkSensor(RIGHT, RED)) {
-            Motors.hardFwdRight();
+            Motors.hardFwdRight(25);
              //Serial.println("HARDRIGHT");
             lastRed = RIGHT;
             break;
           } else if (Lines.checkSensor(LEFT_MID, RED) && !Lines.checkSensor(RIGHT_MID, RED)) {
-            Motors.softFwdLeft();
+            Motors.softFwdLeft(15);
              //Serial.println("SOFTLEFT");
             lastRed = LEFT_MID;
             break;
           } else if (Lines.checkSensor(RIGHT_MID, RED) && !Lines.checkSensor(LEFT_MID, RED)) {
-            Motors.softFwdRight();
+            Motors.softFwdRight(15);
              //Serial.println("SOFTRIGHT");
             lastRed = RIGHT_MID;
             break;
           } else {
             if (lastRed == LEFT) {
-              Motors.hardFwdLeft();
+              Motors.hardFwdLeft(25);
                //Serial.println("HARDLEFT");
             } else if (lastRed == RIGHT) {
-              Motors.hardFwdRight();
+              Motors.hardFwdRight(25);
                //Serial.println("HARDRIGHT");
             } else if (lastRed == LEFT_MID) {
-              Motors.softFwdLeft();
+              Motors.softFwdLeft(15);
                //Serial.println("SOFTLEFT");
             } else if (lastRed == RIGHT_MID) {
-              Motors.softFwdRight();
+              Motors.softFwdRight(15);
                //Serial.println("SOFTRIGHT");
             }
           }
@@ -241,35 +246,50 @@ void loop() {
 
         case PRESS_RED_1:
 
-          if (((current_millis-black_tape_start) > (1000+motor_timer_duration)) && 
-          (Lines.checkAnySensor(RED))) {
-            Motors.idle();
+          if (((current_millis-black_tape_start) > (black_tape_timer)) && 
+          (change_to_press || 
+          (Lines.checkSensor(RIGHT_MID,RED) || Lines.checkSensor(RIGHT,RED)))) {
 
             // ----- CHANGE STATE ------ // 
-            STATE = PRESS_DISP;
-            PressDispenser.start(PD_DURATION);
+            if (change_to_press){
+              Motors.idle();
+              motor_timer_start = millis();
+              // // TODO: Remove blocking code
+              while((current_millis - motor_timer_start) < 500) {
+                current_millis = millis();
+              }
 
-            FWD_STATE = PRESS_RED_2;
+              STATE = PRESS_DISP;
+              PressDispenser.start(PD_DURATION);
 
-            // skip the turning stage for the first press dispensing
-            motor_timer_duration = 0;
-            lastRed = -1;
+              FWD_STATE = PRESS_RED_2;
+              // skip the turning stage for the first press dispensing
+              motor_timer_duration = 0;
+              lastRed = -1;
+              black_tape_timer = 2000;
+              change_to_press = false;
             // ------------------------- //
+            } else {
+              black_tape_start = millis();
+              black_tape_timer = 250;
+              change_to_press = true;
+            }
+
             break;
           } else if (Lines.checkSensor(LEFT, BLACK)){
             lastRed = LEFT;
-            Motors.softFwdRight(5);
+            Motors.softFwdRight(35);
              //Serial.println("SOFTRIGHT");
           } else if (!Lines.checkSensor(LEFT, BLACK)) {
             lastRed = RIGHT;
-            Motors.softFwdLeft(5);
+            Motors.softFwdLeft(20);
              //Serial.println("SOFTLEFT");
           } else {
             if (lastRed == LEFT) {
-              Motors.softFwdRight(5);
+              Motors.softFwdRight(35);
                //Serial.println("SOFTRIGHT");
             } else if (lastRed == RIGHT) {
-              Motors.softFwdLeft(5);
+              Motors.softFwdLeft(20);
                //Serial.println("SOFTLEFT");
             }
           }
@@ -278,33 +298,46 @@ void loop() {
         
         case PRESS_RED_2:
 
-          if (((current_millis - black_tape_start) > 1000) &&
-          (Lines.checkAnySensor(RED))) {
-            Motors.idle();
+          if (((current_millis-black_tape_start) > (black_tape_timer)) && 
+          (change_to_press || 
+          (Lines.checkSensor(RIGHT_MID,RED) || Lines.checkSensor(RIGHT,RED)))) {
+            
+            if (change_to_press) {
+              Motors.idle();
+              motor_timer_start = millis();
+              while((current_millis - motor_timer_start) < 500) {
+                current_millis = millis();
+              }
 
-            // ----- CHANGE STATE ------ // 
-            STATE = PRESS_DISP;
-            FWD_STATE = LINE_FOLLOWING_RETURN;
-            motor_timer_duration = rotation_time[0]; // 90 DEG
-            lastRed = -1;
-            // ------------------------- //
+              // ----- CHANGE STATE ------ // 
+              STATE = PRESS_DISP;
+              PressDispenser.start(PD_DURATION);
+              FWD_STATE = LINE_FOLLOWING_RETURN;
+              motor_timer_duration = rotation_time[0]; // 90 DEG
+              lastRed = -1;
+              // ------------------------- //
+            } else {
+              black_tape_start = millis();
+              black_tape_timer = 250;
+              change_to_press = true;
+            }
             break;
           } else if (Lines.checkSensor(LEFT, BLACK)){
             lastRed = LEFT;
-            Motors.softFwdRight(5);
+            Motors.softFwdRight(30);
              //Serial.println("SOFTRIGHT");
              break;
           } else if (!Lines.checkSensor(LEFT, BLACK)) {
             lastRed = RIGHT;
-            Motors.softFwdLeft(5);
+            Motors.softFwdLeft(20);
              //Serial.println("SOFTLEFT");
              break;
           } else {
             if (lastRed == LEFT) {
-              Motors.softFwdRight(5);
+              Motors.softFwdRight(30);
                //Serial.println("SOFTRIGHT");
             } else if (lastRed == RIGHT) {
-              Motors.softFwdLeft(5);
+              Motors.softFwdLeft(20);
                //Serial.println("SOFTLEFT");
                break;
             }
@@ -316,6 +349,7 @@ void loop() {
 
           if (Lines.checkAnySensor(BLACK)) {
              //Serial.println("REACHED STUDIO LINE.");
+             Motors.forward();
             // ----- CHANGE STATE ------ // 
             STATE = GAMEOVER;
             
@@ -324,7 +358,7 @@ void loop() {
             current_millis = millis();
 
             //TODO: REMOVE THIS BLOCKING CODE
-            while ((current_millis-motor_timer_start) < 1000){
+            while ((current_millis-motor_timer_start) < 750){
               current_millis = millis();
             }
             CrowdPleaser.start(CP_DURATION);
@@ -405,9 +439,9 @@ void loop() {
 void checkGlobalEvents(void) {
   // if (TestForKey()) RespToKey();
 
-  // if (CrowdPleaser.isRunning()) {
-  //   CrowdPleaser.monitorShutdown(current_millis);
-  // }
+  if (CrowdPleaser.isRunning()) {
+    CrowdPleaser.monitorShutdown(current_millis);
+  }
 
   if (PressDispenser.isRunning()) {
     PressDispenser.monitorShutdown(current_millis);

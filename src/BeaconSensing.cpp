@@ -44,16 +44,20 @@ bool BeaconSensing::checkForFrequency(Freqs_t high_or_low, Freq_modes_t freq_typ
         case HIGH_FREQ:
             lb = high_freq_range[0];
             ub = high_freq_range[1];
+            break;
         case LOW_FREQ:
             lb = low_freq_range[0];
             ub = low_freq_range[1];
+            break;
     }
 
     switch (freq_type){
         case AVERAGE:
             return ((getAvgFreq() >= lb) && (getAvgFreq() <= ub));
+            break;
         case INSTANT:
             return ((getInstantFreq() >= lb) && (getInstantFreq() <= ub));
+            break;
     }
     return false;
 }

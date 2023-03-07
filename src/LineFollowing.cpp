@@ -22,15 +22,15 @@ LineFollowing::LineFollowing() {
     }
   }
 
-  lower_red[0] = 150; //266; //229;
-  lower_red[1] = 100; //162; //149;
-  lower_red[2] = 100; // 118; //130;
-  lower_red[3] = 100; //117; //136;
+  lower_red[0] = 229; //150; //266; //229;
+  lower_red[1] = 142; //100; //162; //149;
+  lower_red[2] = 119; //100; // 118; //130;
+  lower_red[3] = 125; //100; //117; //136;
 
-  upper_red[0] = 550;//776; //679;
-  upper_red[1] = 300;//483; //460;
-  upper_red[2] = 300;//369; //394;
-  upper_red[3] = 300;//371; //415;
+  upper_red[0] = 600; //650; //726; //543; //550;//776; //679;
+  upper_red[1] = 550; //600; //640; //377; //300;//483; //460;
+  upper_red[2] = 440; //480; //540; //317; //300;//369; //394;
+  upper_red[3] = 440; //480; //539; //351; //300;//371; //415;
 
   blk_high[0] = -1000;
   blk_high[1] = -1000;
@@ -188,10 +188,10 @@ void LineFollowing::calibrate_sensors(){
   lower_red[2] = blk_high[2] + red_margin * (white_low[2] - blk_high[2]);
   lower_red[3] = blk_high[3] + red_margin * (white_low[3] - blk_high[3]);
 
-  upper_red[0] = white_low[0] - red_margin * (white_low[0] - blk_high[0]);
-  upper_red[1] = white_low[1] - red_margin * (white_low[1] - blk_high[1]);
-  upper_red[2] = white_low[2] - red_margin * (white_low[2] - blk_high[2]);
-  upper_red[3] = white_low[3] - red_margin * (white_low[3] - blk_high[3]);
+  upper_red[0] = white_low[0] - 0.3 * (white_low[0] - blk_high[0]);
+  upper_red[1] = white_low[1] - 0.3 * (white_low[1] - blk_high[1]);
+  upper_red[2] = white_low[2] - 0.3 * (white_low[2] - blk_high[2]);
+  upper_red[3] = white_low[3] - 0.3 * (white_low[3] - blk_high[3]);
 
   Serial.println("Red Tape Thresholds");
   for (int j = 0; j < n_sensors; j++){

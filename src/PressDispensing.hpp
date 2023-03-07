@@ -2,18 +2,18 @@
 #define PressDispensing_hpp
 #include "Arduino.h"
 
-#define PD_DURATION  5 //seconds
+#define PD_DURATION  0.3 //seconds
 
 class PressDispensing {
     public:
     PressDispensing(int pd_pin);
 
-    int duration;
+    float duration;
     int pin;
 
-    void start(int duration);
+    void start(float duration);
     bool isRunning();
-    void monitorShutdown(int currentTime);
+    void monitorShutdown(float currentTime);
 
     private:
     int startTime;
