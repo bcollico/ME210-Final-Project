@@ -10,14 +10,15 @@
             "includePath": [
                 "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/include",
                 "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/src",
+                "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/.pio/libdeps/uno/Bolder Flight Systems MPU9250/src",
+                "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
                 "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/.pio/libdeps/uno/TimerInterrupt/src",
                 "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/cores/arduino",
                 "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/variants/standard",
                 "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
                 "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/HID/src",
-                "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
                 "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
-                "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
                 ""
             ],
             "browse": {
@@ -25,14 +26,15 @@
                 "path": [
                     "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/include",
                     "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/src",
+                    "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/.pio/libdeps/uno/Bolder Flight Systems MPU9250/src",
+                    "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                    "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
                     "C:/Users/bcollico/Documents/PlatformIO/Projects/ME210-Final-Project/.pio/libdeps/uno/TimerInterrupt/src",
                     "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/cores/arduino",
                     "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/variants/standard",
                     "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
                     "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/HID/src",
-                    "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
                     "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
-                    "C:/Users/bcollico/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
                     ""
                 ]
             },

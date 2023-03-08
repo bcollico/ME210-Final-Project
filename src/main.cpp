@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <MPU9250.h>
 #include <LineFollowing.hpp>
 #include <MotorControl.hpp>
 #include <BeaconSensing.hpp>
@@ -6,6 +7,8 @@
 #include <PressDispensing.hpp>
 
 #define USE_TIMER_2 true
+// #define USE_TIMER_1 true
+#define IMU_FREQ_HZ 100
 
 // pin definitions
 #define L_DPIN        9
@@ -17,8 +20,14 @@
 #define PD_PIN        8
 #define FREQ_SWITCH_PIN 4
 
+#define D90 PI/2
+#define D180 PI
+
 #include <TimerInterrupt.h>
 #include <ISR_Timer.h>
+
+// an MPU9250 object with the MPU-9250 sensor on I2C bus 0 with address 0x68
+MPU9250 IMU(Wire,0x68);
 
 // counter for respToKey
 int counter = 0;
@@ -26,7 +35,7 @@ int counter = 0;
 // motor timer
 long int motor_timer_start;
 long int motor_timer_duration;
-int rotation_time[2] = {1100, 1800}; // [ms]
+int rotation_time[2] = {1100, 2500}; //{1100, 1800}; // [ms]
 int lastRed = -1;
 
 // game timer
@@ -89,9 +98,27 @@ void interruptHandler(){
   Beacon.Update();
 }
 
+float yaw = 0.0;
+float vel = 0.0;
+float pos = 0.0;
+float T_imu = 1./IMU_FREQ_HZ;
+
+float const PIPI = 2*PI;
+
+void integrate_imu(){
+  yaw = yaw + T_imu * IMU.getGyroZ_rads();
+  // pos = pos + vel*T_imu + 0.5*T_imu*T_imu*IMU.getAccelY_mss();
+  // vel = vel + T_imu * IMU.getAccelY_mss();
+  pos = pos + T_imu * vel;
+  vel = vel + T_imu * IMU.getAccelY_mss();
+}
+
+
+int control_stage = 0;
+
 // setup
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   while(!Serial);
 
   game_start_time = millis();
@@ -100,8 +127,8 @@ void setup() {
 
   // the beacon frequency estimate will update automatically at the 
   // specified frequency (estimate_freq).
-  ITimer2.init();
-  ITimer2.attachInterrupt(Beacon.estimate_freq, interruptHandler);
+  // ITimer2.init();
+  // ITimer2.attachInterrupt(Beacon.estimate_freq, interruptHandler);
 
   CrowdPleaser.start(CP_DURATION);
 
@@ -112,6 +139,42 @@ void setup() {
   } else {
     our_freq = LOW_FREQ; // TODO: switch to LOW/HIGH_FREQ
   }
+
+  // setup IMU
+  int status = IMU.begin();
+  if (status < 0) {
+    Serial.println("IMU initialization unsuccessful");
+    Serial.println("Check IMU wiring or try cycling power");
+    Serial.print("Status: ");
+    Serial.println(status);
+    while(1) {}
+  }
+
+  // setting the accelerometer full scale range to +/-8G 
+  IMU.setAccelRange(MPU9250::ACCEL_RANGE_2G);
+  // setting the gyroscope full scale range to +/-500 deg/s
+  IMU.setGyroRange(MPU9250::GYRO_RANGE_500DPS);
+  // setting DLPF bandwidth to 20 Hz
+  IMU.setDlpfBandwidth(MPU9250::DLPF_BANDWIDTH_5HZ);
+  // setting SRD to 19 for a 50 Hz update rate
+  IMU.setSrd(10);
+
+  // IMU.calibrateAccel();
+  // IMU.calibrateGyro();
+
+  // Serial.println(IMU.getAccelBiasY_mss());
+  // Serial.println(IMU.getGyroBiasZ_rads(),10);
+
+  IMU.setGyroBiasZ_rads(0.0133160066); //0.0133160066 //0.01340921870.0140217552
+  // IMU.setAccelCalY(-6, 1.0);
+  
+  ITimer2.init();
+  ITimer2.attachInterrupt(IMU_FREQ_HZ, integrate_imu);
+
+  Serial.println("HERE");
+
+  // set proportional gain to 1.25 and motor frequency to 20 HZ
+  Motors.setControlParams(2.0, 1.0, 25.0);
 
   // Lines.calibrate_sensors();
 
@@ -125,21 +188,53 @@ void loop() {
   // Serial.println(STATE);
 
   current_millis = millis();
+  IMU.readSensor();
   Lines.Update();  // call this as frequently as you want to update the averages
 
-  // IDLE, FINDING_BEACON, INIT_ORIENTATION, AT_STUDIO, DRIVE_FWD, TURNING,
-  // PRESS_DISP, INTO_STUDIO, GAMEOVER
+  if ((current_millis - timer_start) > 200) {
+    timer_start = millis();
+    Serial.print(yaw*180/PI, 6);
+    Serial.print(", ");
+    Serial.println(pos, 6);
+  }
 
   switch (STATE) {
     case BOT_IDLE:
 
       // transition to beacon finding
-      Motors.slowRight();
+      // Motors.slowRight();
       STATE = FINDING_BEACON;
+
+      // switch (control_stage) {
+      //   case 0:
+      //     yaw = 0.0;
+      //     Motors.StartHeadingControl(D180);
+      //     control_stage = 1;
+      //     break;
+      //   case 1:
+      //     yaw = 0.0;
+      //     Motors.StartHeadingControl(-D180);
+      //     control_stage = 0;
+      //     break;
+      // }
+      // break;
+
+      yaw = 0.0;
+      Motors.StartHeadingControl(-D180);
+
       break;
 
     case FINDING_BEACON:
-      if (Beacon.checkForFrequency(our_freq, INSTANT)){
+      // display the data
+
+      // if (!Motors.HeadingControlActive()) {
+      //   STATE = BOT_IDLE;
+      //   delay(1000);
+      // }
+
+      break;
+
+      if ((false) && Beacon.checkForFrequency(our_freq, INSTANT)){
         Motors.idle();
         // delay(3000);
         motor_timer_start = millis();
@@ -423,21 +518,20 @@ void loop() {
       break;
   }
 
-  // current_millis = millis();
-  // if ((current_millis - timer_start) >= buffer) {
-  //   for (int i = 0; i < 4; i++) {
-  //     Serial.print(Lines.meas_vals[i][Lines.newest_idx]);
-  //     Serial.print(", ");
-  //   }
-  //   Serial.println("");
-  //   timer_start = millis();
-  // }
-
   checkGlobalEvents();
 }
 
 void checkGlobalEvents(void) {
   // if (TestForKey()) RespToKey();
+
+  if (Motors.HeadingControlActive()) {
+    // check if we are currently controlling the motors
+    Motors.ControlHeading(yaw, current_millis);
+  }
+
+  if (Motors.PositionControlActive()) {
+    Motors.ControlPosition(pos, current_millis);
+  }
 
   if (CrowdPleaser.isRunning()) {
     CrowdPleaser.monitorShutdown(current_millis);
@@ -447,14 +541,11 @@ void checkGlobalEvents(void) {
     PressDispenser.monitorShutdown(current_millis);
   }
 
-  // if ((STATE != GAMEOVER) && (current_millis - game_start_time) >= 130000) {
-  //   CrowdPleaser.start(CP_DURATION);
-  //   STATE = GAMEOVER;
-  // }
+  if ((STATE != GAMEOVER) && (current_millis - game_start_time) >= 130000) {
+    CrowdPleaser.start(CP_DURATION);
+    STATE = GAMEOVER;
+  }
 
-  // Serial.print(Motors.L_speed);
-  // Serial.print(", ");
-  // Serial.println(Motors.R_speed);
 }
 
 uint8_t TestForKey(void) {
@@ -481,7 +572,7 @@ void RespToKey(void) {
     counter = 0;
     Motors.idle();
   }
-  CrowdPleaser.start(CP_DURATION);
-  PressDispenser.start(PD_DURATION);
+  // CrowdPleaser.start(CP_DURATION);
+  // PressDispenser.start(PD_DURATION);
    //Serial.println(Serial.read());
 }

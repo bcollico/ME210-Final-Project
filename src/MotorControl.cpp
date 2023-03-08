@@ -16,6 +16,9 @@ MotorControl::MotorControl(int l_epin, int r_epin, int l_dpin, int r_dpin) {
     pinMode(r_epin,OUTPUT);
     pinMode(l_dpin,OUTPUT);
     pinMode(r_dpin,OUTPUT);
+
+    motor_pos_ctrl_flag = false;
+    motor_yaw_ctrl_flag = false;
 }
 
 void MotorControl::idle() {
@@ -169,4 +172,107 @@ void MotorControl::motorRotate(Motor_t motor, WheelDirection_t direction, int sp
   analogWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, map((direction == CW ? -1 * speed : speed),-100,100,0,255));
   // analogWrite(motor == MOTOR_LEFT ? L_epin : R_epin, map(speed,0,100,0,255));
   // digitalWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, direction);
+}
+
+void MotorControl::motorRotate(Motor_t motor, WheelDirection_t direction, float speed) {
+  if (speed < 0.0) speed = 0.0;
+  if (speed > 100.0) speed = 100.0;
+  digitalWrite(motor == MOTOR_LEFT ? L_epin : R_epin, HIGH);
+  analogWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, map((direction == CW ? -1 * speed : speed),-100,100,0,255));
+  // analogWrite(motor == MOTOR_LEFT ? L_epin : R_epin, map(speed,0,100,0,255));
+  // digitalWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, direction);
+}
+
+
+void MotorControl::setControlParams(float kp_yaw_, float kp_pos_, float f_ctrl_) {
+  kp_yaw = kp_yaw_;
+  kp_pos = kp_pos_;
+  f_ctrl = f_ctrl_;
+  T_ctrl = 1./f_ctrl;
+}
+
+void MotorControl::StartHeadingControl(float yaw_desired) {
+  yaw_d = yaw_desired;
+  ctrl_timer_start = millis();
+  motor_yaw_ctrl_flag = true;
+}
+
+void MotorControl::StartPositionControl(float pos_desired) {
+  pos_d = pos_desired;
+  ctrl_timer_start = millis();
+  motor_pos_ctrl_flag = true;
+}
+
+bool MotorControl::HeadingControlActive() {
+    return motor_yaw_ctrl_flag;
+}
+
+bool MotorControl::PositionControlActive() {
+    return motor_pos_ctrl_flag;
+}
+
+void MotorControl::ControlHeading(float yaw, int current_millis) {
+
+  // control motor if we've not reached our desired change
+  // and at the desired control frequency
+  if ((abs(yaw - yaw_d) > 0.035) && motor_yaw_ctrl_flag) {
+    if ((current_millis - ctrl_timer_start) > T_ctrl) {
+      ctrl_timer_start = millis();
+
+      motor_cmd = SaturateControl((yaw_d-yaw) * (180/PI) * kp_yaw);
+
+      if (motor_cmd > 0) {
+        motorRotate(MOTOR_RIGHT, CW, motor_cmd);
+        motorRotate(MOTOR_LEFT, CCW, motor_cmd);
+      } else {
+        motorRotate(MOTOR_RIGHT,CCW, abs(motor_cmd));
+        motorRotate(MOTOR_LEFT,  CW, abs(motor_cmd));
+      }
+    }
+  } else {
+    idle();
+    // motor_yaw_ctrl_flag = false;
+  }
+}
+
+void MotorControl::ControlPosition(float pos, int current_millis) {
+
+  // control motor if we've not reached our desired change
+  // and at the desired control frequency
+  if ((abs(pos_d - pos) > 0.05) && motor_pos_ctrl_flag) {
+    if ((current_millis - ctrl_timer_start) > T_ctrl) {
+      ctrl_timer_start = millis();
+
+      motor_cmd = SaturateControl((pos_d - pos) * kp_pos);
+
+      if (motor_cmd > SLOW) {
+        motor_cmd = SLOW;
+      }
+
+      if (motor_cmd > 0) {
+        motorRotate(MOTOR_RIGHT, CW, motor_cmd);
+        motorRotate(MOTOR_LEFT , CW, motor_cmd);
+      } else {
+        motorRotate(MOTOR_RIGHT,CCW, motor_cmd);
+        motorRotate(MOTOR_LEFT, CCW, motor_cmd);
+      }
+      }
+  } else {
+    idle();
+    // motor_pos_ctrl_flag = false;
+  }
+}
+
+float MotorControl::SaturateControl(float input) {
+  if (input > SLOW) {
+    return SLOW;
+  } else if (input < -SLOW) {
+    return -SLOW;
+  } else if ((input > 0) && (input < 15)) {
+    return 15;
+  } else if ((input < 0) && (input > -15)) {
+    return -15;
+  } else {
+    return input;
+  }
 }

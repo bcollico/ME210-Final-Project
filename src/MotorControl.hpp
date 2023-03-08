@@ -57,8 +57,33 @@ class MotorControl {
       // General movement public function
       void moveBot(WheelDirection_t l_dir, WheelDirection_t r_dir, int l_speed, int r_speed);
 
+      // motor control
+      void setControlParams(float kp_yaw_, float kp_pos_, float f_ctrl_);
+      void StartHeadingControl(float yaw_desired);
+      void StartPositionControl(float pos_desired);
+      bool HeadingControlActive();
+      bool PositionControlActive();
+      void ControlHeading(float yaw, int current_millis);
+      void ControlPosition(float yaw, int current_millis); 
+
     private:
+
+    // 
       void motorRotate(Motor_t motor, WheelDirection_t direction, int speed);
+      void motorRotate(Motor_t motor, WheelDirection_t direction, float speed);
+
+      float SaturateControl(float in);
+
+      bool motor_pos_ctrl_flag;
+      bool motor_yaw_ctrl_flag;
+      float motor_cmd; // control command
+      float yaw_d; // desired yaw
+      float pos_d; // desired yaw
+      float kp_yaw; // proportional control gain
+      float kp_pos; // proportional control gain
+      float f_ctrl; // control frequency
+      float T_ctrl; // control period
+      int ctrl_timer_start; // control timer
 };
 
 #endif

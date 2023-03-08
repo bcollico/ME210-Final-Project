@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"name": "Lab1",
+			"path": "../../Lab1"
+		},
+		{
+			"name": "IMU_Test",
+			"path": "../../IMU_Test"
+		}
+	],
+	"settings": {}
+}
