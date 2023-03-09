@@ -12,11 +12,11 @@ typedef enum {
 } WheelDirection_t;
 
 // defines for motor speeds
-#define FAST  45
+#define FAST  30
 #define SLOW  20
 #define OFF   0
-#define HARDFWD_DIFF  30 // %
-#define SOFTFWD_DIFF  20  // %
+#define HARDFWD_DIFF  20 // %
+#define SOFTFWD_DIFF  10  // %
 
 // #define FAST  30
 // #define SLOW  30
