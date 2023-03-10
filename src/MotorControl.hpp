@@ -2,6 +2,7 @@
 #define MotorControl_hpp
 
 #include "Arduino.h"
+#include "Parameters.hpp"
 
 typedef enum {
   MOTOR_LEFT, MOTOR_RIGHT
@@ -10,13 +11,6 @@ typedef enum {
 typedef enum {
   CCW, CW
 } WheelDirection_t;
-
-// defines for motor speeds
-#define FAST  30
-#define SLOW  20
-#define OFF   0
-#define HARDFWD_DIFF  20 // %
-#define SOFTFWD_DIFF  10  // %
 
 // #define FAST  30
 // #define SLOW  30

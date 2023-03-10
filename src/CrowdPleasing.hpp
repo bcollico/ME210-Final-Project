@@ -3,8 +3,6 @@
 
 #include "Arduino.h"
 
-#define CP_DURATION  2 //seconds
-
 class CrowdPleasing {
     public:
     CrowdPleasing(int cp_pin);

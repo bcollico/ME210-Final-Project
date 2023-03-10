@@ -2,8 +2,6 @@
 #define PressDispensing_hpp
 #include "Arduino.h"
 
-#define PD_DURATION  0.3 //seconds
-
 class PressDispensing {
     public:
     PressDispensing(int pd_pin);
