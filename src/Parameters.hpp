@@ -18,7 +18,7 @@
 #define CP_DURATION  2 //seconds
 
 // Press Dispenser Parameters
-#define PD_DURATION  0.3 //seconds
+#define PD_DURATION  0.75 //seconds
 
 // Motor Control Parameters
 #define FAST  30
