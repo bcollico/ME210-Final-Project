@@ -22,15 +22,15 @@ LineFollowing::LineFollowing() {
     }
   }
 
-  lower_red[0] = 177; //200; //245; //287; //229; //150; //266; //229;
-  lower_red[1] = 85; //100; //130; //180; //142; //100; //162; //149;
-  lower_red[2] = 67; //80; //104; //149; //119; //100; // 118; //130;
-  lower_red[3] = 51; //60; //89; //151; //125; //100; //117; //136;
+  lower_red[0] = 183; //188; //165; //177; //200; //245; //287; //229; //150; //266; //229;
+  lower_red[1] = 99; //81; //82; //85; //100; //130; //180; //142; //100; //162; //149;
+  lower_red[2] = 82; //51; //62; //67; //80; //104; //149; //119; //100; // 118; //130;
+  lower_red[3] = 58; //41; //61; //51; //60; //89; //151; //125; //100; //117; //136;
 
-  upper_red[0] = 581; //650; //699; //675; //600; //650; //726; //543; //550;//776; //679;
-  upper_red[1] = 320; //350; //397; //430; //550; //600; //640; //377; //300;//483; //460;
-  upper_red[2] = 257; //260; //307; //359; //440; //480; //540; //317; //300;//369; //394;
-  upper_red[3] = 201; //230; //264; //352; //440; //480; //539; //351; //300;//371; //415;
+  upper_red[0] = 427; //423; //500; //581; //650; //699; //675; //600; //650; //726; //543; //550;//776; //679;
+  upper_red[1] = 237; //233; //280; //320; //350; //397; //430; //550; //600; //640; //377; //300;//483; //460;
+  upper_red[2] = 211; //191; //200; //257; //260; //307; //359; //440; //480; //540; //317; //300;//369; //394;
+  upper_red[3] = 246; //167; //170; //201; //230; //264; //352; //440; //480; //539; //351; //300;//371; //415;
 
   blk_high[0] = -1000;
   blk_high[1] = -1000;
@@ -41,6 +41,16 @@ LineFollowing::LineFollowing() {
   white_low[1] = 2000;
   white_low[2] = 2000;
   white_low[3] = 2000;
+
+  red_high[0] = -1000;
+  red_high[1] = -1000;
+  red_high[2] = -1000;
+  red_high[3] = -1000;
+
+  red_low[0] = 2000;
+  red_low[1] = 2000;
+  red_low[2] = 2000;
+  red_low[3] = 2000;
 
   red_margin = 0.2; // 20% margin between black and white before reaching red
 }
@@ -153,45 +163,73 @@ void LineFollowing::calibrate_sensors(){
 
   int current_value;
 
-  Serial.println("PLACE OVER BLACK TAPE");
+  // Serial.println("PLACE OVER BLACK TAPE");
+  // delay(5000);
+  // Serial.println("-------------START-------------");
+  // for (int i = 0; i < n_samples; i++) {
+  //   for (int j = 0; j < n_sensors; j++) {
+  //     current_value = analogRead(pins[j]);
+  //     // Serial.println(analogRead(pins[j]));
+  //     if (current_value > blk_high[j] ) {
+  //       blk_high[j] = current_value;
+  //     }
+  //   }
+  //   delay(100);
+  // }
+  // Serial.println("-------------STOP-------------");
+  // delay(1000);
+  // Serial.println("PLACE OVER WHITE AREA");
+  // delay(5000);
+  // Serial.println("-------------START-------------");
+  // for (int i = 0; i < n_samples; i++) {
+  //   for (int j = 0; j < n_sensors; j++) {
+  //     current_value = analogRead(pins[j]);
+  //     // Serial.println(analogRead(pins[j]));
+  //     if (current_value < white_low[j] ) {
+  //       white_low[j] = current_value;
+  //     }
+  //   }
+  //   delay(100);
+  // }
+  // Serial.println("-------------STOP-------------");
+
+  // lower_red[0] = blk_high[0] + 0.1 * (white_low[0] - blk_high[0]);
+  // lower_red[1] = blk_high[1] + 0.1 * (white_low[1] - blk_high[1]);
+  // lower_red[2] = blk_high[2] + 0.1 * (white_low[2] - blk_high[2]);
+  // lower_red[3] = blk_high[3] + 0.1 * (white_low[3] - blk_high[3]);
+
+  // upper_red[0] = white_low[0] - 0.45 * (white_low[0] - blk_high[0]);
+  // upper_red[1] = white_low[1] - 0.45 * (white_low[1] - blk_high[1]);
+  // upper_red[2] = white_low[2] - 0.45 * (white_low[2] - blk_high[2]);
+  // upper_red[3] = white_low[3] - 0.45 * (white_low[3] - blk_high[3]);
+
+  Serial.println("PLACE OVER RED TAPE");
   delay(5000);
   Serial.println("-------------START-------------");
   for (int i = 0; i < n_samples; i++) {
     for (int j = 0; j < n_sensors; j++) {
       current_value = analogRead(pins[j]);
       // Serial.println(analogRead(pins[j]));
-      if (current_value > blk_high[j] ) {
-        blk_high[j] = current_value;
+      if (current_value > red_high[j] ) {
+        red_high[j] = current_value;
       }
-    }
-    delay(100);
-  }
-  Serial.println("-------------STOP-------------");
-  delay(1000);
-  Serial.println("PLACE OVER WHITE AREA");
-  delay(5000);
-  Serial.println("-------------START-------------");
-  for (int i = 0; i < n_samples; i++) {
-    for (int j = 0; j < n_sensors; j++) {
-      current_value = analogRead(pins[j]);
-      // Serial.println(analogRead(pins[j]));
-      if (current_value < white_low[j] ) {
-        white_low[j] = current_value;
+      if (current_value < red_low[j] ) {
+        red_low[j] = current_value;
       }
     }
     delay(100);
   }
   Serial.println("-------------STOP-------------");
 
-  lower_red[0] = blk_high[0] + 0.1 * (white_low[0] - blk_high[0]);
-  lower_red[1] = blk_high[1] + 0.1 * (white_low[1] - blk_high[1]);
-  lower_red[2] = blk_high[2] + 0.1 * (white_low[2] - blk_high[2]);
-  lower_red[3] = blk_high[3] + 0.1 * (white_low[3] - blk_high[3]);
+  lower_red[0] = 0.75 * red_low[0];
+  lower_red[1] = 0.75 * red_low[1];
+  lower_red[2] = 0.75 * red_low[2];
+  lower_red[3] = 0.75 * red_low[3];
 
-  upper_red[0] = white_low[0] - 0.4 * (white_low[0] - blk_high[0]);
-  upper_red[1] = white_low[1] - 0.4 * (white_low[1] - blk_high[1]);
-  upper_red[2] = white_low[2] - 0.4 * (white_low[2] - blk_high[2]);
-  upper_red[3] = white_low[3] - 0.4 * (white_low[3] - blk_high[3]);
+  upper_red[0] = 1.1 * red_high[0];
+  upper_red[1] = 1.1 * red_high[1];
+  upper_red[2] = 1.1 * red_high[2];
+  upper_red[3] = 1.1 * red_high[3];
 
   Serial.println("Red Tape Thresholds");
   for (int j = 0; j < n_sensors; j++){

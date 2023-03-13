@@ -27,6 +27,7 @@ int lastRed = -1;
 bool inStudio = 1;
 bool hitLineOnWayThere = 0;
 bool hitBlackLine = 0;
+bool hitRedLineOnWayBack = 0;
 
 // game timer
 long int game_start_time = millis();
@@ -113,7 +114,7 @@ void setup() {
   if (digitalRead(FREQ_SWITCH_PIN)) {
     our_freq = LOW_FREQ;
   } else {
-    our_freq = LOW_FREQ; // TODO: switch to LOW/HIGH_FREQ
+    our_freq = HIGH_FREQ; // TODO: switch to LOW/HIGH_FREQ
   }
 
   // Motors.slowLeft();
@@ -124,7 +125,8 @@ void setup() {
 
 void loop() {
 
-  Serial.println(STATE);
+  // Serial.println(STATE);
+  // Serial.println(our_freq);
 
   current_millis = millis();
   Lines.Update();  // call this as frequently as you want to update the averages
@@ -132,7 +134,8 @@ void loop() {
   switch (STATE) {
     case BOT_IDLE:
       STATE = FINDING_BEACON;
-      Motors.slowLeft();
+      // Motors.slowLeft();
+      Motors.moveBot(CW,CCW,30,30);
       break;
     case FINDING_BEACON:
       if (Beacon.checkForFrequency(our_freq, INSTANT)){
@@ -143,6 +146,8 @@ void loop() {
         Motors.idle();
         break;
       }
+      // Serial.print(our_freq);
+      // Serial.print(", ");
       // Serial.println(Beacon.freq_vals[Beacon.newest_idx]);
       break;
     case STUDIO_BLK:
@@ -157,7 +162,8 @@ void loop() {
         Motors.idle();
         if (LF_STATE == LINE_FOLLOW_TO && inStudio == 1){
           STATE = STUDIO_BLK;
-          Motors.forward();
+          Motors.moveBot(CCW,CCW,60,60);
+          // Motors.forward();
         } else if (LF_STATE == LINE_FOLLOW_TO && inStudio == 0 && hitLineOnWayThere == 0) {
           STATE = LINE_FOLLOWING;
           Motors.forward();
@@ -165,13 +171,19 @@ void loop() {
         }
         else if (LF_STATE == LINE_FOLLOW_TO && inStudio == 0){
           STATE = DRIVE_FWD_TO;
-          Motors.forward();
+          // Motors.forward();
+          Motors.moveBot(CCW,CCW,60,60);
         } else if (LF_STATE == LINE_FOLLOW_FROM && inStudio == 1){
           Motors.idle();
           STATE = RELOADING;
           LF_STATE = LINE_FOLLOW_TO;
-        } else {
+        } else if (LF_STATE == LINE_FOLLOW_FROM && inStudio == 0 && hitRedLineOnWayBack == 1) {
+          STATE = LINE_FOLLOWING;
           Motors.forward();
+          hitRedLineOnWayBack = 0;
+        } else {
+          // Motors.forward();
+          Motors.moveBot(CCW,CCW,60,60);
           motor_timer_start = millis();
           STATE = DRIVE_FWD_FROM;
         }
@@ -183,88 +195,111 @@ void loop() {
         Motors.idle();
         STATE = TURNING;
         motor_timer_start = millis();
-        motor_timer_duration = 500; // 90-deg turn  // GAIN  
-        Motors.slowLeft();
+        motor_timer_duration = 342; // 90-deg turn  // GAIN  
+        // Motors.slowLeft();
+        Motors.moveBot(CW,CCW,35,35);
       }
       if ((current_millis-motor_timer_start >= 2000)){ // TODO: adjust as speed increases // GAIN
         // Motors.moveBot(CCW, CCW, FAST - 10, FAST); // TODO: adjust for speed
-        Motors.forward();
+        // Motors.forward();
+        Motors.moveBot(CCW,CCW,60,60);
         STATE = SOFT_TURNING_TO;
       }
       break;
     case SOFT_TURNING_TO:
-      if (Lines.checkSensor(LEFT_MID, RED) || Lines.checkSensor(RIGHT_MID, RED)) { // TODO: change if line following not aggressive enough
-        if (Lines.checkSensor(LEFT, RED)) {lastRed = LEFT;}
-        else if (Lines.checkSensor(LEFT_MID, RED)) {lastRed = LEFT_MID;}
-        else if (Lines.checkSensor(RIGHT_MID, RED)) {lastRed = RIGHT_MID;}
-        else {lastRed = RIGHT;}
+      if (Lines.checkSensor(LEFT, RED)) { // TODO: change if line following not aggressive enough
+        // if (Lines.checkSensor(LEFT, RED)) {lastRed = LEFT;}
+        // else if (Lines.checkSensor(LEFT_MID, RED)) {lastRed = LEFT_MID;}
+        // else if (Lines.checkSensor(RIGHT_MID, RED)) {lastRed = RIGHT_MID;}
+        // else {lastRed = RIGHT;}
+        lastRed = 10; // maybe temporary? To null out any lastRed behavior after turn
         motor_timer_start = millis();
-        motor_timer_duration = 400;  // GAIN     
+        motor_timer_duration = 342;  // GAIN     
         STATE = TURNING;
-        Motors.slowLeft();
+        // Motors.slowLeft();
+        Motors.moveBot(CW,CCW,35,35);
         }
       break;
     case LINE_FOLLOWING:
       if (Lines.checkAnySensor(BLACK) && LF_STATE == LINE_FOLLOW_TO) {
         Motors.idle();
+        // if (lastRed == LEFT) {
+        //   Motors.moveBot(CW,CCW,35,35);
+        //   delay(300);
+        //   Motors.idle();
+        // } else if (lastRed == RIGHT) {
+        //   Motors.moveBot(CCW,CW,35,35);
+        //   delay(300);
+        //   Motors.idle();
+        // }
         STATE = PRESS_DISP;
         PressDispenser.start(PD_DURATION);
         LF_STATE = LINE_FOLLOW_FROM;
-        delay(100);
+        delay(10);
       } else if (Lines.checkAnySensor(BLACK) && LF_STATE == LINE_FOLLOW_FROM) {
           //Serial.println("REACHED STUDIO LINE.");
           // Motors.idle();
           // delay(5000);
-          Motors.moveBot(CCW, CCW, FAST - 10, FAST); // TODO: adjust for speed // GAIN
+          Motors.moveBot(CCW, CCW, FAST - 8, FAST); // TODO: adjust for speed // GAIN
           STATE = INTO_STUDIO;
           motor_timer_start = millis();
           inStudio = 1;
       } else if (Lines.checkSensor(LEFT, RED)) {
-        Motors.hardFwdLeft();
+        // Motors.hardFwdLeft();
+        Motors.moveBot(CCW,CCW,12,36);
           //Serial.println("HARDLEFT");
         lastRed = LEFT;
       } else if (Lines.checkSensor(RIGHT, RED)) {
-        Motors.hardFwdRight();
+        // Motors.hardFwdRight();
+        Motors.moveBot(CCW,CCW,36,12);
           //Serial.println("HARDRIGHT");
         lastRed = RIGHT;
       } else if (Lines.checkSensor(LEFT_MID, RED) && !Lines.checkSensor(RIGHT_MID, RED)) {
-        Motors.softFwdLeft();
+        // Motors.softFwdLeft();
+        Motors.moveBot(CCW,CCW,20,36);
           //Serial.println("SOFTLEFT");
         lastRed = LEFT_MID;
       } else if (Lines.checkSensor(RIGHT_MID, RED) && !Lines.checkSensor(LEFT_MID, RED)) {
-        Motors.softFwdRight();
+        // Motors.softFwdRight();
+        Motors.moveBot(CCW,CCW,36,20);
           //Serial.println("SOFTRIGHT");
         lastRed = RIGHT_MID;
       } else {
         if (lastRed == LEFT) {
-          Motors.hardFwdLeft();
+          // Motors.hardFwdLeft();
+          Motors.moveBot(CCW,CCW,12,36);
             //Serial.println("HARDLEFT");
         } else if (lastRed == RIGHT) {
-          Motors.hardFwdRight();
+          // Motors.hardFwdRight();
+          Motors.moveBot(CCW,CCW,36,12);
             //Serial.println("HARDRIGHT");
         } else if (lastRed == LEFT_MID) {
-          Motors.softFwdLeft();
+          // Motors.softFwdLeft();
+          Motors.moveBot(CCW,CCW,20,36);
             //Serial.println("SOFTLEFT");
         } else if (lastRed == RIGHT_MID) {
-          Motors.softFwdRight();
+          // Motors.softFwdRight();
+          Motors.moveBot(CCW,CCW,36,20);
             //Serial.println("SOFTRIGHT");
         }
       }
       break;
     case PRESS_DISP:
-      if (!PressDispenser.isRunning()){
-        STATE = DRIVE_BWD;
-        Motors.backward();
-        motor_timer_start = millis();
-        current_millis = millis();
-      }
+      delay(PD_DURATION * 1000); // wait for press to dispense
+      PressDispenser.monitorShutdown(game_start_time + 130001);
+      STATE = DRIVE_BWD;
+      // Motors.backward();
+      Motors.moveBot(CW,CW,60,60);
+      motor_timer_start = millis();
+      current_millis = millis();
       break;
     case DRIVE_BWD:
-      if ((current_millis-motor_timer_start) >= 750){ // TODO: adjust with speed // GAIN
+      if ((current_millis-motor_timer_start) >= 375){ // TODO: adjust with speed // GAIN
         STATE = TURNING;
         motor_timer_start = millis();
-        motor_timer_duration = 1100; // 90-deg turn // GAIN    
-        Motors.slowLeft();
+        motor_timer_duration = 400; // 90-deg turn // GAIN    
+        // Motors.slowLeft();
+        Motors.moveBot(CW,CCW,35,35);
       }
       break;
     case DRIVE_FWD_FROM:
@@ -274,17 +309,20 @@ void loop() {
         Motors.idle();
         STATE = TURNING;
         motor_timer_start = millis();
-        motor_timer_duration = 500; // 90-deg turn   // GAIN 
-        Motors.slowLeft();
+        motor_timer_duration = 250; // 90-deg turn   // GAIN 
+        // Motors.slowLeft();
+        Motors.moveBot(CW,CCW,35,35);
         hitBlackLine = 1;
       }
       if (hitBlackLine == 1){ // TODO: adjust for speed
         STATE = SOFT_TURNING_FROM;
-        Motors.forward();
+        // Motors.forward();
+        Motors.moveBot(CCW,CCW,60,60);
         // Motors.moveBot(CCW, CCW, FAST - 10, FAST); // TODO: adjust for speed
       } else if ((current_millis-motor_timer_start) >= 1000) {
         STATE = SOFT_TURNING_FROM;
-        Motors.forward();
+        // Motors.forward();
+        Motors.moveBot(CCW,CCW,60,60);
       }
       break;
     case SOFT_TURNING_FROM:
@@ -293,8 +331,9 @@ void loop() {
         Motors.idle();
         STATE = TURNING;
         motor_timer_start = millis();
-        motor_timer_duration = 500; // 90-deg turn   // GAIN 
-        Motors.slowLeft();
+        motor_timer_duration = 250; // 90-deg turn   // GAIN 
+        // Motors.slowLeft();
+        Motors.moveBot(CW,CCW,35,35);
         hitBlackLine = 1;
       }
       if (Lines.checkSensor(RIGHT_MID, RED) || Lines.checkSensor(LEFT_MID, RED) || Lines.checkSensor(LEFT, RED)) {
@@ -302,14 +341,20 @@ void loop() {
         else if (Lines.checkSensor(LEFT_MID, RED)) {lastRed = LEFT_MID;}
         else if (Lines.checkSensor(RIGHT_MID, RED)) {lastRed = RIGHT_MID;}
         else {lastRed = RIGHT;}
-        STATE = LINE_FOLLOWING;
         hitBlackLine = 0;
+        motor_timer_start = millis();
+        motor_timer_duration = 342;  // GAIN     
+        STATE = TURNING;
+        // Motors.slowLeft();
+        Motors.moveBot(CW,CCW,35,35);
+        hitRedLineOnWayBack = 1;
       }
       break;
     case INTO_STUDIO:
       if ((current_millis-motor_timer_start) >= 1500){ // TODO: adjust with speed // GAIN
         STATE = FINDING_BEACON_RESTART;
-        Motors.slowLeft();
+        // Motors.slowLeft();
+        Motors.moveBot(CW,CCW,35,35);
       }
       break;
     case FINDING_BEACON_RESTART:
@@ -324,7 +369,8 @@ void loop() {
       // move motors forward
       if (digitalRead(RESET_PIN)) { // replace with button press flag
         STATE = STUDIO_BLK;
-        Motors.forward();
+        // Motors.forward();
+        Motors.moveBot(CCW,CCW,60,60);
         LF_STATE = LINE_FOLLOW_TO;
         hitLineOnWayThere = 0;
       }
@@ -344,9 +390,9 @@ void checkGlobalEvents(void) {
     CrowdPleaser.monitorShutdown(current_millis);
   }
 
-  if (PressDispenser.isRunning()) {
-    PressDispenser.monitorShutdown(current_millis);
-  }
+  // if (PressDispenser.isRunning()) {
+  //   PressDispenser.monitorShutdown(current_millis);
+  // }
 
   if ((STATE != GAMEOVER) && (current_millis - game_start_time) >= 130000) {
     CrowdPleaser.start(CP_DURATION);

@@ -31,6 +31,8 @@ class LineFollowing {
         int lower_red[4];
         int blk_high[4];
         int white_low[4];
+        int red_low[4];
+        int red_high[4];
 
         float red_margin;
 
