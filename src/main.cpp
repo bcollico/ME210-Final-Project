@@ -91,6 +91,10 @@ void interruptHandler(){
   Beacon.Update();
 }
 
+void resetToBotIdle() {
+  STATE = BOT_IDLE;
+}
+
 float const PIPI = 2*PI;
 
 // setup
@@ -117,6 +121,9 @@ void setup() {
     our_freq = HIGH_FREQ; // TODO: switch to LOW/HIGH_FREQ
   }
 
+  pinMode(FREQ_SWITCH_PIN, OUTPUT);
+  attachInterrupt(digitalPinToInterrupt(FREQ_SWITCH_PIN), resetToBotIdle, CHANGE);
+
   // Motors.slowLeft();
 
   // Lines.calibrate_sensors();
@@ -131,8 +138,15 @@ void loop() {
   current_millis = millis();
   Lines.Update();  // call this as frequently as you want to update the averages
 
+  // if ((current_millis - timer_start) > 500) {
+  //   Serial.println("-----------------");
+  //   timer_start = millis();
+  // }
+
   switch (STATE) {
     case BOT_IDLE:
+      // Serial.println("BOT IDLE");
+      // Serial.println(our_freq);
       STATE = FINDING_BEACON;
       // Motors.slowLeft();
       Motors.moveBot(CW,CCW,30,30);
@@ -297,7 +311,7 @@ void loop() {
       if ((current_millis-motor_timer_start) >= 375){ // TODO: adjust with speed // GAIN
         STATE = TURNING;
         motor_timer_start = millis();
-        motor_timer_duration = 400; // 90-deg turn // GAIN    
+        motor_timer_duration = 350; // 90-deg turn // GAIN    
         // Motors.slowLeft();
         Motors.moveBot(CW,CCW,35,35);
       }
@@ -309,7 +323,7 @@ void loop() {
         Motors.idle();
         STATE = TURNING;
         motor_timer_start = millis();
-        motor_timer_duration = 250; // 90-deg turn   // GAIN 
+        motor_timer_duration = 150; // 90-deg turn   // GAIN 
         // Motors.slowLeft();
         Motors.moveBot(CW,CCW,35,35);
         hitBlackLine = 1;
@@ -331,7 +345,7 @@ void loop() {
         Motors.idle();
         STATE = TURNING;
         motor_timer_start = millis();
-        motor_timer_duration = 250; // 90-deg turn   // GAIN 
+        motor_timer_duration = 150; // 90-deg turn   // GAIN 
         // Motors.slowLeft();
         Motors.moveBot(CW,CCW,35,35);
         hitBlackLine = 1;
@@ -395,6 +409,7 @@ void checkGlobalEvents(void) {
   // }
 
   if ((STATE != GAMEOVER) && (current_millis - game_start_time) >= 130000) {
+    // Serial.println("TIMER TRIGGERED");
     CrowdPleaser.start(CP_DURATION);
     STATE = GAMEOVER;
   }
