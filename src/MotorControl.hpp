@@ -11,6 +11,7 @@ typedef enum {
   CCW, CW
 } WheelDirection_t;
 
+<<<<<<< Updated upstream
 // defines for motor speeds
 #define FAST  45
 #define SLOW  20
@@ -24,6 +25,8 @@ typedef enum {
 // #define HARDFWD_DIFF  20 // %
 // #define SOFTFWD_DIFF  10  // %
 
+=======
+>>>>>>> Stashed changes
 class MotorControl {
     public:
       MotorControl(int l_epin, int r_epin, int l_dpin, int r_dpin);
@@ -39,7 +42,8 @@ class MotorControl {
 
 
       void idle();
-      void forward();
+      void fastForward();
+      void slowForward();
       void backward();
       void slowRight();
       void slowLeft();
@@ -53,12 +57,19 @@ class MotorControl {
       void softFwdRight(int diff);
       void softFwdLeft();
       void softFwdLeft(int diff);
+      void intoStudio();
 
       // General movement public function
       void moveBot(WheelDirection_t l_dir, WheelDirection_t r_dir, int l_speed, int r_speed);
 
     private:
+<<<<<<< Updated upstream
       void motorRotate(Motor_t motor, WheelDirection_t direction, int speed);
+=======
+
+      void motorRotate(Motor_t motor, WheelDirection_t direction, int speed);
+      void motorRotate(Motor_t motor, WheelDirection_t direction, float speed);
+>>>>>>> Stashed changes
 };
 
 #endif
