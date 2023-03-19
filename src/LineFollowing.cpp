@@ -22,17 +22,6 @@ LineFollowing::LineFollowing() {
     }
   }
 
-<<<<<<< Updated upstream
-  lower_red[0] = 229; //150; //266; //229;
-  lower_red[1] = 142; //100; //162; //149;
-  lower_red[2] = 119; //100; // 118; //130;
-  lower_red[3] = 125; //100; //117; //136;
-
-  upper_red[0] = 600; //650; //726; //543; //550;//776; //679;
-  upper_red[1] = 550; //600; //640; //377; //300;//483; //460;
-  upper_red[2] = 440; //480; //540; //317; //300;//369; //394;
-  upper_red[3] = 440; //480; //539; //351; //300;//371; //415;
-=======
   lower_red[0] = 126;
   lower_red[1] = 74;
   lower_red[2] = 45;
@@ -42,7 +31,6 @@ LineFollowing::LineFollowing() {
   upper_red[1] = 239;
   upper_red[2] = 214;
   upper_red[3] = 266;
->>>>>>> Stashed changes
 
   blk_high[0] = -1000;
   blk_high[1] = -1000;

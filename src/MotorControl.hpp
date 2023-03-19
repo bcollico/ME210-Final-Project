@@ -2,6 +2,7 @@
 #define MotorControl_hpp
 
 #include "Arduino.h"
+#include "Parameters.hpp"
 
 typedef enum {
   MOTOR_LEFT, MOTOR_RIGHT
@@ -11,22 +12,6 @@ typedef enum {
   CCW, CW
 } WheelDirection_t;
 
-<<<<<<< Updated upstream
-// defines for motor speeds
-#define FAST  45
-#define SLOW  20
-#define OFF   0
-#define HARDFWD_DIFF  30 // %
-#define SOFTFWD_DIFF  20  // %
-
-// #define FAST  30
-// #define SLOW  30
-// #define OFF   0
-// #define HARDFWD_DIFF  20 // %
-// #define SOFTFWD_DIFF  10  // %
-
-=======
->>>>>>> Stashed changes
 class MotorControl {
     public:
       MotorControl(int l_epin, int r_epin, int l_dpin, int r_dpin);
@@ -63,13 +48,9 @@ class MotorControl {
       void moveBot(WheelDirection_t l_dir, WheelDirection_t r_dir, int l_speed, int r_speed);
 
     private:
-<<<<<<< Updated upstream
-      void motorRotate(Motor_t motor, WheelDirection_t direction, int speed);
-=======
 
       void motorRotate(Motor_t motor, WheelDirection_t direction, int speed);
       void motorRotate(Motor_t motor, WheelDirection_t direction, float speed);
->>>>>>> Stashed changes
 };
 
 #endif

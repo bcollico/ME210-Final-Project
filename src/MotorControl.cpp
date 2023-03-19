@@ -186,8 +186,6 @@ void MotorControl::motorRotate(Motor_t motor, WheelDirection_t direction, int sp
   digitalWrite(motor == MOTOR_LEFT ? L_epin : R_epin, HIGH);
   analogWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, map((direction == CW ? -1 * speed : speed),-100,100,0,255));
 }
-<<<<<<< Updated upstream
-=======
 
 void MotorControl::motorRotate(Motor_t motor, WheelDirection_t direction, float speed) {
   if (speed < 0.0) speed = 0.0;
@@ -195,4 +193,3 @@ void MotorControl::motorRotate(Motor_t motor, WheelDirection_t direction, float 
   digitalWrite(motor == MOTOR_LEFT ? L_epin : R_epin, HIGH);
   analogWrite(motor == MOTOR_LEFT ? L_dpin : R_dpin, map((direction == CW ? -1 * speed : speed),-100,100,0,255));
 }
->>>>>>> Stashed changes
